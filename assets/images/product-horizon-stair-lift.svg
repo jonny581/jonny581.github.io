@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="AmeriGlide Horizon stair lift with charcoal upholstered seat on a white rail, facing left">
+  <rect width="800" height="600" fill="#f3efe8"/>
+  <!-- wall panels -->
+  <rect x="0" y="0" width="800" height="510" fill="#ece4d4"/>
+  <rect x="40" y="40" width="220" height="180" rx="8" fill="#e2d7c2"/>
+  <rect x="300" y="40" width="220" height="180" rx="8" fill="#e2d7c2"/>
+  <rect x="0" y="510" width="800" height="90" fill="#b7a98e"/>
+  <!-- staircase ascending LEFT (mirror of Rave for distinction) -->
+  <g>
+    <rect x="0" y="170" width="160" height="340" fill="#cabfa9"/>
+    <rect x="80" y="240" width="160" height="270" fill="#d6ccb8"/>
+    <rect x="160" y="310" width="160" height="200" fill="#cabfa9"/>
+    <rect x="240" y="380" width="160" height="130" fill="#d6ccb8"/>
+    <rect x="320" y="450" width="160" height="60" fill="#cabfa9"/>
+    <g fill="#a3957a">
+      <rect x="0" y="170" width="160" height="10"/>
+      <rect x="80" y="240" width="160" height="10"/>
+      <rect x="160" y="310" width="160" height="10"/>
+      <rect x="240" y="380" width="160" height="10"/>
+      <rect x="320" y="450" width="160" height="10"/>
+    </g>
+  </g>
+  <!-- white rail -->
+  <path d="M580 472 L100 205" stroke="#e8e8e6" stroke-width="24" stroke-linecap="round"/>
+  <path d="M580 472 L100 205" stroke="#c9ccc9" stroke-width="6" stroke-linecap="round"/>
+  <g stroke="#aeb2ae" stroke-width="10">
+    <line x1="200" y1="262" x2="200" y2="312"/>
+    <line x1="330" y1="335" x2="330" y2="385"/>
+    <line x1="460" y1="408" x2="460" y2="455"/>
+  </g>
+  <!-- carriage facing left -->
+  <g transform="translate(470,255) rotate(6)">
+    <!-- drive case white -->
+    <rect x="-148" y="118" width="130" height="78" rx="12" fill="#dfe1de"/>
+    <rect x="-140" y="126" width="114" height="62" rx="9" fill="#f2f3f1"/>
+    <rect x="-138" y="170" width="44" height="12" rx="6" fill="#9a3412"/>
+    <!-- footrest -->
+    <rect x="-92" y="190" width="118" height="14" rx="6" fill="#4b5563"/>
+    <rect x="-84" y="184" width="102" height="8" rx="4" fill="#6b7280"/>
+    <!-- post -->
+    <rect x="-94" y="80" width="22" height="48" fill="#565f6a"/>
+    <!-- seat charcoal fabric -->
+    <rect x="-118" y="60" width="132" height="32" rx="15" fill="#414b56"/>
+    <rect x="-118" y="60" width="132" height="15" rx="7" fill="#566270"/>
+    <!-- backrest tall, contoured -->
+    <rect x="-130" y="-86" width="38" height="156" rx="17" fill="#414b56"/>
+    <rect x="-123" y="-78" width="14" height="140" rx="7" fill="#566270"/>
+    <rect x="-138" y="-114" width="56" height="32" rx="14" fill="#333c46"/>
+    <!-- armrest -->
+    <path d="M-104 -16 q88 -12 100 36" fill="none" stroke="#22272e" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="-2" cy="22" r="9" fill="#22272e"/>
+    <circle cx="-2" cy="22" r="4" fill="#f6c453"/>
+    <!-- belt -->
+    <path d="M8 66 q-62 28 -120 -8" fill="none" stroke="#22272e" stroke-width="7"/>
+    <rect x="-66" y="72" width="22" height="14" rx="3" fill="#0f172a"/>
+  </g>
+  <!-- potted plant lower right -->
+  <g transform="translate(660,420)">
+    <path d="M0 60 h84 l-12 80 h-60 Z" fill="#9a3412"/>
+    <path d="M42 58 q-44 -36 -20 -78 q26 24 24 60 q8 -42 44 -52 q6 44 -34 70 Z" fill="#5f9e6e"/>
+  </g>
+  <ellipse cx="700" cy="566" rx="80" ry="12" fill="#8a7c62" opacity=".35"/>
+</svg>

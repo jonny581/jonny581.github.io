@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="AmeriGlide Rave 2 stair lift with tan seat on a gray tread-mounted rail">
+  <rect width="800" height="600" fill="#eef3f6"/>
+  <rect x="0" y="0" width="800" height="600" fill="#e2ecf1" opacity=".5"/>
+  <!-- wall + baseboard -->
+  <rect x="0" y="0" width="800" height="520" fill="#f2f0e9"/>
+  <rect x="0" y="520" width="800" height="80" fill="#d9cdb8"/>
+  <rect x="0" y="512" width="800" height="10" fill="#c4b69e"/>
+  <!-- staircase ascending right -->
+  <g fill="#cdd6dd" stroke="#9fadb8" stroke-width="3">
+    <path d="M80 520 H760 V450 H690 V380 H620 V310 H550 V240 H480 V170 H760 V120 H460 V220 H530 V290 H600 V360 H670 V430 H740 V520 Z" fill="none" stroke="none"/>
+  </g>
+  <g>
+    <rect x="640" y="170" width="160" height="350" fill="#d8e0e6"/>
+    <rect x="560" y="240" width="160" height="280" fill="#cfd9e0"/>
+    <rect x="480" y="310" width="160" height="210" fill="#d8e0e6"/>
+    <rect x="400" y="380" width="160" height="140" fill="#cfd9e0"/>
+    <rect x="320" y="450" width="160" height="70" fill="#d8e0e6"/>
+    <g fill="#aeb9c2">
+      <rect x="640" y="170" width="160" height="10"/>
+      <rect x="560" y="240" width="160" height="10"/>
+      <rect x="480" y="310" width="160" height="10"/>
+      <rect x="400" y="380" width="160" height="10"/>
+      <rect x="320" y="450" width="160" height="10"/>
+    </g>
+  </g>
+  <!-- tread-mounted rail -->
+  <path d="M210 470 L700 200" stroke="#6b7a86" stroke-width="22" stroke-linecap="round"/>
+  <path d="M210 470 L700 200" stroke="#8b9aa6" stroke-width="10" stroke-linecap="round"/>
+  <g stroke="#6b7a86" stroke-width="10">
+    <line x1="430" y1="392" x2="430" y2="350"/>
+    <line x1="540" y1="330" x2="540" y2="290"/>
+    <line x1="650" y1="270" x2="650" y2="222"/>
+  </g>
+  <!-- carriage -->
+  <g transform="translate(330,272) rotate(-6)">
+    <!-- drive case -->
+    <rect x="28" y="118" width="120" height="74" rx="12" fill="#7d8b96"/>
+    <rect x="36" y="126" width="104" height="58" rx="9" fill="#97a5b0"/>
+    <!-- footrest -->
+    <rect x="-34" y="186" width="120" height="14" rx="6" fill="#3d4852"/>
+    <rect x="-26" y="180" width="104" height="8" rx="4" fill="#5a6671"/>
+    <!-- seat post -->
+    <rect x="64" y="78" width="22" height="50" fill="#4a565f"/>
+    <!-- seat base (tan vinyl) -->
+    <rect x="-14" y="62" width="128" height="30" rx="14" fill="#c89d6b"/>
+    <rect x="-14" y="62" width="128" height="14" rx="7" fill="#d9b285"/>
+    <!-- backrest -->
+    <rect x="86" y="-78" width="34" height="148" rx="15" fill="#c89d6b"/>
+    <rect x="92" y="-72" width="12" height="136" rx="6" fill="#d9b285"/>
+    <!-- headrest -->
+    <rect x="74" y="-104" width="52" height="30" rx="13" fill="#b98c58"/>
+    <!-- armrest -->
+    <path d="M96 -18 q-86 -10 -98 38" fill="none" stroke="#2f3942" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="-2" cy="20" r="9" fill="#2f3942"/>
+    <!-- seatbelt -->
+    <path d="M-10 70 q60 26 116 -10" fill="none" stroke="#3d4852" stroke-width="7"/>
+    <rect x="40" y="74" width="22" height="14" rx="3" fill="#1e293b"/>
+    <!-- control toggle on armrest -->
+    <circle cx="-2" cy="20" r="4" fill="#e25822"/>
+  </g>
+  <!-- handrail on far wall -->
+  <path d="M120 430 L660 140" stroke="#b9a888" stroke-width="12" stroke-linecap="round"/>
+  <!-- floor shadow -->
+  <ellipse cx="340" cy="540" rx="180" ry="16" fill="#9fadb8" opacity=".35"/>
+</svg>

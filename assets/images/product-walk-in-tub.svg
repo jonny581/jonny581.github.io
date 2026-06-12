@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="AmeriGlide Sanctuary walk-in tub in white acrylic with watertight entry door, chrome latch, grab bar and deck-mounted faucet">
+  <rect width="800" height="600" fill="#eaf2ee"/>
+  <!-- wall: upper paint + tile wainscot -->
+  <rect x="0" y="0" width="800" height="300" fill="#dcebe4"/>
+  <rect x="0" y="300" width="800" height="160" fill="#e9eef0"/>
+  <g stroke="#d4dde1" stroke-width="4">
+    <line x1="0" y1="352" x2="800" y2="352"/><line x1="0" y1="404" x2="800" y2="404"/>
+    <line x1="100" y1="300" x2="100" y2="460"/><line x1="200" y1="300" x2="200" y2="460"/>
+    <line x1="300" y1="300" x2="300" y2="460"/><line x1="400" y1="300" x2="400" y2="460"/>
+    <line x1="500" y1="300" x2="500" y2="460"/><line x1="600" y1="300" x2="600" y2="460"/>
+    <line x1="700" y1="300" x2="700" y2="460"/>
+  </g>
+  <rect x="0" y="460" width="800" height="140" fill="#cfd8d2"/>
+  <!-- towel ring + towel -->
+  <circle cx="700" cy="110" r="24" fill="none" stroke="#8d9aa5" stroke-width="7"/>
+  <rect x="676" y="118" width="48" height="104" rx="8" fill="#9a3412"/>
+  <rect x="676" y="150" width="48" height="10" fill="#7c2d12"/>
+  <!-- plant left -->
+  <g transform="translate(60,360)">
+    <path d="M14 60 h64 l-10 60 h-44 Z" fill="#9a3412"/>
+    <path d="M46 58 q-36 -30 -16 -64 q22 20 20 50 q6 -34 36 -42 q4 36 -28 56 Z" fill="#5f9e6e"/>
+  </g>
+  <!-- ===================== walk-in tub ===================== -->
+  <!-- tub body: tall, front view -->
+  <rect x="180" y="170" width="440" height="300" rx="26" fill="#ffffff" stroke="#b9c8d2" stroke-width="5"/>
+  <!-- top deck rim -->
+  <rect x="168" y="156" width="464" height="34" rx="17" fill="#f0f5f8" stroke="#c4d2da" stroke-width="4"/>
+  <!-- skirt seam -->
+  <line x1="186" y1="436" x2="614" y2="436" stroke="#d5dfe6" stroke-width="4"/>
+  <!-- U-shaped door, slightly ajar: dark gap on hinge side -->
+  <path d="M330 196 h140 q14 0 14 14 v160 q0 24 -24 24 h-120 q-24 0 -24 -24 v-160 q0 -14 14 -14 Z" fill="#e8f1f6" stroke="#9fb6c2" stroke-width="5"/>
+  <path d="M330 196 q-12 4 -12 18 v158 q0 22 20 24 l-6 -200 Z" fill="#54707e"/>
+  <!-- door inner panel -->
+  <path d="M348 216 h108 q10 0 10 10 v128 q0 18 -18 18 h-92 q-18 0 -18 -18 v-128 q0 -10 10 -10 Z" fill="#dcecf4"/>
+  <!-- chrome latch handle on door -->
+  <rect x="448" y="270" width="16" height="64" rx="8" fill="#8d9aa5"/>
+  <rect x="430" y="290" width="44" height="14" rx="7" fill="#aab7c1"/>
+  <!-- low step-in threshold marker under door -->
+  <rect x="334" y="398" width="136" height="12" rx="6" fill="#f6c453"/>
+  <text x="402" y="384" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="bold" fill="#54707e">LOW STEP-IN</text>
+  <!-- grab bar, vertical, left of door -->
+  <path d="M252 226 v140" stroke="#7d8b96" stroke-width="14" stroke-linecap="round"/>
+  <rect x="240" y="216" width="38" height="14" rx="7" fill="#8d9aa5"/>
+  <rect x="240" y="362" width="38" height="14" rx="7" fill="#8d9aa5"/>
+  <!-- hydrotherapy jets -->
+  <g fill="#bcd3df" stroke="#9fb6c2" stroke-width="3">
+    <circle cx="222" cy="288" r="10"/><circle cx="222" cy="338" r="10"/>
+    <circle cx="580" cy="288" r="10"/><circle cx="580" cy="338" r="10"/>
+  </g>
+  <!-- faucet set on deck -->
+  <g fill="#8d9aa5">
+    <rect x="508" y="126" width="13" height="34" rx="6"/>
+    <rect x="536" y="126" width="13" height="34" rx="6"/>
+    <path d="M572 158 q22 -36 -6 -52" stroke="#8d9aa5" stroke-width="11" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- hand shower resting on deck -->
+  <path d="M236 158 q-16 -34 12 -44" stroke="#8d9aa5" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="250" cy="110" r="13" fill="#aab7c1"/>
+  <!-- floor shadow -->
+  <ellipse cx="400" cy="520" rx="280" ry="20" fill="#9aa79e" opacity=".35"/>
+  <!-- bath mat -->
+  <rect x="320" y="494" width="170" height="30" rx="12" fill="#0f4c5c" opacity=".75"/>
+</svg>
