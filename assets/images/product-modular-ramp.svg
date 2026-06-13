@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Silver aluminum modular wheelchair ramp with handrails leading from a front porch to the ground">
+  <rect width="800" height="600" fill="#e9f1ec"/>
+  <!-- sky + lawn -->
+  <rect x="0" y="0" width="800" height="430" fill="#ddeae6"/>
+  <rect x="0" y="430" width="800" height="170" fill="#a9c9a4"/>
+  <circle cx="120" cy="86" r="40" fill="#f6c453" opacity=".8"/>
+  <!-- house corner with siding -->
+  <rect x="520" y="40" width="280" height="400" fill="#e7ddc6"/>
+  <g stroke="#d3c6a8" stroke-width="5">
+    <line x1="520" y1="90" x2="800" y2="90"/><line x1="520" y1="140" x2="800" y2="140"/>
+    <line x1="520" y1="190" x2="800" y2="190"/><line x1="520" y1="240" x2="800" y2="240"/>
+    <line x1="520" y1="290" x2="800" y2="290"/><line x1="520" y1="340" x2="800" y2="340"/>
+  </g>
+  <!-- door -->
+  <rect x="600" y="180" width="110" height="200" rx="6" fill="#0f4c5c"/>
+  <rect x="614" y="200" width="82" height="70" rx="4" fill="#bfe3ec"/>
+  <circle cx="694" cy="300" r="6" fill="#f6c453"/>
+  <!-- porch landing -->
+  <rect x="540" y="380" width="240" height="20" fill="#9fadb8"/>
+  <g stroke="#7d8b96" stroke-width="4"><line x1="560" y1="382" x2="560" y2="398"/><line x1="600" y1="382" x2="600" y2="398"/><line x1="640" y1="382" x2="640" y2="398"/><line x1="680" y1="382" x2="680" y2="398"/><line x1="720" y1="382" x2="720" y2="398"/><line x1="760" y1="382" x2="760" y2="398"/></g>
+  <rect x="540" y="400" width="240" height="44" fill="#8a98a3"/>
+  <!-- ramp run descending left -->
+  <path d="M540 384 L96 500 L96 522 L540 406 Z" fill="#b6c2cb"/>
+  <path d="M540 380 L96 496" stroke="#7d8b96" stroke-width="8"/>
+  <!-- tread lines -->
+  <g stroke="#93a2ad" stroke-width="4">
+    <line x1="180" y1="478" x2="186" y2="496"/><line x1="240" y1="462" x2="246" y2="480"/>
+    <line x1="300" y1="446" x2="306" y2="464"/><line x1="360" y1="430" x2="366" y2="448"/>
+    <line x1="420" y1="414" x2="426" y2="432"/><line x1="480" y1="398" x2="486" y2="416"/>
+  </g>
+  <!-- handrail posts + double rails, near side -->
+  <g stroke="#6f7d88" stroke-width="9" stroke-linecap="round">
+    <line x1="120" y1="498" x2="120" y2="404"/>
+    <line x1="226" y1="470" x2="226" y2="376"/>
+    <line x1="332" y1="442" x2="332" y2="348"/>
+    <line x1="438" y1="414" x2="438" y2="320"/>
+    <line x1="536" y1="388" x2="536" y2="294"/>
+  </g>
+  <path d="M112 408 L544 296" stroke="#5e6c77" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M112 452 L544 340" stroke="#5e6c77" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- far-side rail (lighter) -->
+  <path d="M150 386 L560 280" stroke="#9aa9b4" stroke-width="8" stroke-linecap="round"/>
+  <g stroke="#9aa9b4" stroke-width="7" stroke-linecap="round">
+    <line x1="158" y1="470" x2="158" y2="384"/><line x1="360" y1="416" x2="360" y2="330"/><line x1="552" y1="366" x2="552" y2="278"/>
+  </g>
+  <!-- support legs -->
+  <g stroke="#7d8b96" stroke-width="11" stroke-linecap="round">
+    <line x1="180" y1="496" x2="180" y2="540"/>
+    <line x1="330" y1="456" x2="330" y2="532"/>
+    <line x1="470" y1="420" x2="470" y2="524"/>
+  </g>
+  <g fill="#5e6c77"><rect x="164" y="536" width="34" height="10" rx="5"/><rect x="314" y="528" width="34" height="10" rx="5"/><rect x="454" y="520" width="34" height="10" rx="5"/></g>
+  <!-- shrubs + path -->
+  <circle cx="60" cy="450" r="30" fill="#5f9e6e"/>
+  <circle cx="760" cy="460" r="34" fill="#5f9e6e"/>
+  <path d="M60 540 q120 -16 180 -4 l-14 38 q-90 -10 -166 4 Z" fill="#dcd3ba"/>
+</svg>
