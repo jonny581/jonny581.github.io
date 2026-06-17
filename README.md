@@ -49,41 +49,48 @@ python3 tools/generate.py
 Edit product details, prices, links or article text in `tools/generate.py` and re-run.
 Styles live in `assets/css/style.css` (high-contrast, WCAG AA, senior-friendly type scale).
 
-## Automatic price checking
+## Weekly price updates (manual, ~15 minutes)
 
 Prices live in **`data/prices.json`** (the single source of truth), separate from
-the article copy in `tools/generate.py`. A weekly GitHub Action keeps them current:
+the article copy in `tools/generate.py`. Updating them is a quick weekly habit —
+you change one number, automation does the rest.
 
-1. **`.github/workflows/price-check.yml`** runs every Monday (and on-demand via
-   *Actions → Weekly Price Check → Run workflow*).
-2. **`tools/check_prices.py`** fetches each product's `scrape_url`, extracts the
-   current price (tries schema.org JSON-LD → price meta tags → an optional
-   per-product regex), and writes any change back to `prices.json` with a dated
-   history entry.
-3. The site is regenerated and, **if a price changed, auto-committed and pushed** —
-   which on GitHub Pages publishes the new price. A green **"Price Drop"** badge
-   appears on the card and review for ~45 days after a decrease, and every review
-   shows a dynamic *"last verified ⟨date⟩"* line.
+**Your weekly routine**
 
-**Fail-safe by design:** if a page is blocked (HTTP 403) or the price can't be
-parsed, the checker **keeps the existing price** and flags the record — it never
-publishes a `$0` or blank price.
+1. Open **[`PRICE-CHECK.md`](PRICE-CHECK.md)** — a checklist (regenerated on every
+   build) listing each product, its current price, and a direct link to the
+   retailer's page. Click each link and compare (~10 min).
+2. For anything that changed, open **`data/prices.json`** on GitHub, click the
+   pencil (Edit), change that product's `"price"` (and `"was"` if the sale
+   changed), and **Commit changes** (~5 min).
+3. Done. You don't run anything else.
 
-**Before it pulls live numbers, you must:** put the real product-page URL in each
-product's `scrape_url`, and (if a retailer doesn't expose schema.org/meta pricing)
-add an `extract.regex` that captures the price. Heads-up: AmeriGlide and
-US Medical Supplies currently return `403` to automated requests, so out of the
-box the weekly run will safely keep prices unchanged and flag them as unreachable
-until real URLs/selectors (or a scraping service/API) are wired in.
+**What happens automatically** (`.github/workflows/site-build.yml`, triggered by
+your commit to `data/prices.json`):
 
-Run it locally:
+- Validates the JSON (a typo fails the build instead of deploying a broken file).
+- Runs `tools/check_prices.py --sync` — stamps this week's *"last verified"* date
+  on every product, and for any changed price appends a dated **history** entry.
+- Regenerates the site and commits the rebuilt pages, which **deploys** them.
+- A green **"Price Drop"** badge appears on the card and review for ~45 days after
+  a decrease; every review shows a dynamic *"last verified ⟨date⟩"* line.
+
+> **Nothing changed this week?** Open *Actions → Build & Deploy on Price Update →
+> Run workflow* to refresh the "last verified" dates without editing anything.
+
+**Local alternative** (if you prefer the terminal):
 
 ```bash
-python3 tools/check_prices.py --seed     # (re)build prices.json from generate.py
-python3 tools/check_prices.py --dry-run  # check live prices, write nothing
-python3 tools/check_prices.py            # check and update prices.json
-python3 tools/generate.py                # re-render the site from updated prices
+python3 tools/check_prices.py --seed   # (re)build prices.json from generate.py
+# ...edit the price values in data/prices.json...
+python3 tools/check_prices.py          # --sync: stamp dates + record changes (no network)
+python3 tools/generate.py              # re-render the site
+python3 tools/check_prices.py --scan   # OPTIONAL: try fetching live prices (often blocked)
 ```
+
+> Note: `--scan` (live fetching) is kept for occasional spot-checks but is **not**
+> scheduled — AmeriGlide and US Medical Supplies block automated requests, which is
+> exactly why the weekly check is a manual eyeball.
 
 ## Compliance notes
 

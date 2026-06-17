@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
-"""HomeEnabled weekly price checker.
+"""HomeEnabled price tool.
 
-Reads data/prices.json (the source of truth for product pricing), fetches each
-product's retailer page, extracts the current price, and writes any changes
-back to prices.json along with a change history. tools/generate.py then renders
-the site from the updated data.
+Pricing lives in data/prices.json (the source of truth), edited by hand each
+week. This tool keeps the bookkeeping tidy so the only thing a human touches is
+the price number.
 
-Design goals:
-  * Fail-safe — a blocked fetch or unparseable page NEVER overwrites a good
-    price or publishes $0. The old price is kept and the record is flagged.
-  * Zero third-party dependencies (Python standard library only) so the GitHub
-    Action needs no pip install and runs fast.
+Modes:
+  --seed   Build/refresh prices.json from the product list in generate.py.
+  --sync   (default) No network. Reconcile manual edits: stamp this week's
+           "verified" date on every product and, wherever the price field was
+           changed, append a dated history entry and mark a price change.
+  --scan   Optional. Try to fetch live prices over the network (schema.org
+           JSON-LD -> price meta tags -> per-product regex). Fail-safe: a
+           blocked or unparseable page keeps the old price, never publishes $0.
+           Kept for occasional spot-checks; not used by any schedule.
+
+Standard library only — no pip install needed.
 
 Usage:
-  python3 tools/check_prices.py --seed     # create prices.json from generate.py
-  python3 tools/check_prices.py            # check prices, update prices.json
-  python3 tools/check_prices.py --dry-run  # check but don't write changes
+  python3 tools/check_prices.py --seed
+  python3 tools/check_prices.py            # sync (after editing prices.json)
+  python3 tools/check_prices.py --scan     # optional live spot-check
 """
 import os, sys, re, json, time, argparse, datetime
 from urllib.request import Request, urlopen
@@ -175,7 +180,7 @@ def seed():
 
 # --------------------------------------------------------------------- check
 
-def check(dry_run=False):
+def scan(dry_run=False):
     if not os.path.exists(DATA):
         print("No prices.json — run with --seed first.")
         return 1
@@ -247,14 +252,53 @@ def _report(changes, blocked, ok):
             f.write("changed=%s\n" % ("true" if changes else "false"))
 
 
+# ----------------------------------------------------------------------- sync
+
+def sync(dry_run=False):
+    """No network. Reconcile manual edits to prices.json.
+
+    Running this means a human did the weekly check, so every product's
+    'last_checked' is stamped today. Wherever the price field differs from the
+    last recorded value, a dated history entry is appended and last_changed is
+    set — which drives the 'Price Drop' badge and the price history.
+    """
+    if not os.path.exists(DATA):
+        print("No prices.json — run with --seed first.")
+        return 1
+    data = json.load(open(DATA))
+    now = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    changes = []
+    for slug, rec in data.items():
+        price = rec.get("price")
+        recorded = rec.get("recorded_price")
+        if recorded is None:
+            rec["recorded_price"] = price            # first sync: set baseline
+        elif to_float(price) != to_float(recorded):
+            entry = {"t": now, "from": recorded, "to": price}
+            rec["history"] = ([entry] + rec.get("history", []))[:HISTORY_MAX]
+            rec["last_changed"] = now
+            rec["recorded_price"] = price
+            changes.append((slug, recorded, price))
+        rec["last_checked"] = now
+        rec["status"] = "manually verified"
+    if not dry_run:
+        json.dump(data, open(DATA, "w"), indent=2)
+    _report(changes, [], len(data))
+    return 0
+
+
 # ----------------------------------------------------------------------- main
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="HomeEnabled price checker")
+    ap = argparse.ArgumentParser(description="HomeEnabled price tool")
     ap.add_argument("--seed", action="store_true", help="create/refresh prices.json from generate.py")
-    ap.add_argument("--dry-run", action="store_true", help="check but do not write changes")
+    ap.add_argument("--sync", action="store_true", help="reconcile manual edits + stamp dates, no network (default)")
+    ap.add_argument("--scan", action="store_true", help="optional: try to fetch live prices over the network")
+    ap.add_argument("--dry-run", action="store_true", help="do everything except write changes")
     args = ap.parse_args()
     if args.seed:
         seed()
+    elif args.scan:
+        sys.exit(scan(dry_run=args.dry_run))
     else:
-        sys.exit(check(dry_run=args.dry_run))
+        sys.exit(sync(dry_run=args.dry_run))

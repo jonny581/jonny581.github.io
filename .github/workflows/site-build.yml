@@ -1,0 +1,55 @@
+name: Build & Deploy on Price Update
+
+# Manual price workflow: when you edit data/prices.json (e.g. in the GitHub web
+# editor) and commit, this validates the file, reconciles the change (dates +
+# history), regenerates the site, and commits the rebuilt pages — which on
+# GitHub Pages deploys them. Run it manually too (Actions → Run workflow) to
+# refresh the "last verified" dates after a no-change weekly check.
+
+on:
+  push:
+    paths:
+      - 'data/prices.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate prices.json
+        run: python3 -c "import json; json.load(open('data/prices.json')); print('prices.json is valid JSON')"
+
+      - name: Reconcile manual edits (dates + history)
+        run: python3 tools/check_prices.py --sync
+
+      - name: Regenerate site
+        run: python3 tools/generate.py
+
+      - name: Commit & deploy
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "build: apply price update & redeploy [skip ci]"
+            git push
+            echo "✅ Deployed updated prices."
+          else
+            echo "Nothing to rebuild."
+          fi

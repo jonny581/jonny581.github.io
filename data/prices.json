@@ -10,10 +10,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$2,199"
   },
   "ameriglide-horizon-stair-lift-review": {
     "name": "AmeriGlide Horizon Standard Stair Lift",
@@ -26,10 +27,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$2,799"
   },
   "ameriglide-hercules-vertical-platform-lift-review": {
     "name": "AmeriGlide Hercules II 750 Vertical Platform Lift",
@@ -42,10 +44,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$6,499"
   },
   "ameriglide-bath-lift-review": {
     "name": "AmeriGlide Reclining Bath Lift",
@@ -58,10 +61,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$649"
   },
   "ameriglide-sanctuary-walk-in-tub-review": {
     "name": "AmeriGlide Sanctuary Walk-In Tub",
@@ -74,10 +78,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$4,299"
   },
   "golden-maxicomfort-pr510-lift-chair-review": {
     "name": "Golden MaxiComfort Cloud PR-510 Lift Chair",
@@ -90,10 +95,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$1,999"
   },
   "pride-go-go-elite-traveller-scooter-review": {
     "name": "Pride Go-Go Elite Traveller Mobility Scooter",
@@ -106,10 +112,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$1,349"
   },
   "ameriglide-toilet-incline-lift-review": {
     "name": "AmeriGlide Toilet Incline Lift",
@@ -122,10 +129,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$1,995"
   },
   "ameriglide-express-dumbwaiter-review": {
     "name": "AmeriGlide Express Residential Dumbwaiter",
@@ -138,10 +146,11 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$5,499"
   },
   "ameriglide-modular-ramp-review": {
     "name": "AmeriGlide Aluminum Modular Ramp System",
@@ -154,9 +163,10 @@
       "strategy": "auto",
       "regex": null
     },
-    "status": "seeded",
-    "last_checked": null,
+    "status": "manually verified",
+    "last_checked": "2026-06-17T05:16:12Z",
     "last_changed": null,
-    "history": []
+    "history": [],
+    "recorded_price": "$1,899"
   }
 }

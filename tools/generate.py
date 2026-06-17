@@ -1375,6 +1375,37 @@ def build_contact():
                 root, "contact.html") + header(root, "contact.html") + body + footer(root)
 
 
+def build_price_checklist():
+    today = datetime.date.today().strftime("%B %-d, %Y")
+    rows = "\n".join(
+        f"| &#9744; | {p['name']} | **{p['price']}** | {p['was']} | {p['retailer']} | [Open price page &#8599;]({p['link']}) |"
+        for p in PRODUCTS)
+    return f"""# &#128197; Weekly Price Check &mdash; HomeEnabled
+
+_Generated {today} &middot; {len(PRODUCTS)} products to verify_
+
+## The 15-minute routine
+
+1. Open each **Open price page** link below and compare the retailer's current
+   price to **Our price**.
+2. For anything that changed, edit [`data/prices.json`](data/prices.json) &mdash; change
+   the `"price"` value (and `"was"` if the sale changed) for that product, then commit.
+3. That's it. The build Action restamps the "last verified" date, records the change
+   in the price history, flags any drop with a badge, regenerates the site, and
+   redeploys &mdash; automatically.
+
+> **Easiest way:** open `data/prices.json` on GitHub, click the pencil (Edit) icon,
+> change the number, and hit *Commit changes*. No local setup, nothing else to touch.
+
+| &#10003; | Product | Our price | Was | Retailer | Check now |
+|---|---------|-----------|-----|----------|-----------|
+{rows}
+
+---
+_Don't edit this file by hand &mdash; it is regenerated on every build._
+"""
+
+
 def write(path, content):
     full = os.path.join(ROOT, path)
     os.makedirs(os.path.dirname(full), exist_ok=True)
@@ -1395,6 +1426,7 @@ def main():
     write("contact.html", build_contact())
     for p in PRODUCTS:
         write(f"articles/{p['slug']}.html", build_article(p))
+    write("PRICE-CHECK.md", build_price_checklist())
     write(".nojekyll", "")
     print(f"Done — {7 + len(PRODUCTS)} pages.")
 
