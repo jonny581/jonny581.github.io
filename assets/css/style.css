@@ -260,6 +260,7 @@ img, svg { max-width: 100%; height: auto; display: block; }
   box-shadow: 0 2px 6px rgba(11,52,66,.25);
 }
 .flag.teal { background: var(--brand); }
+.flag.drop { background: var(--good); left: auto; right: 14px; }
 
 .card-body { padding: 24px 24px 26px; display: flex; flex-direction: column; gap: 11px; flex: 1; }
 
@@ -441,6 +442,11 @@ table.specs tr:nth-child(even) td { background: var(--wash); }
 .cta-panel h3 { color: #fff; margin: 0 0 6px; }
 .cta-panel .cta-price { font-size: 2rem; font-weight: 800; color: #ffd24d; margin: 6px 0 18px; }
 .cta-panel .cta-price span { font-size: 1rem; color: #cfe3e8; text-decoration: line-through; }
+.cta-drop {
+  display: inline-block; background: #15803d; color: #fff;
+  font-size: .78rem; font-weight: 800; letter-spacing: .05em;
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 14px;
+}
 .cta-panel p.small { color: #cfe3e8; font-size: .85rem; margin: 16px 0 0; }
 
 /* ---------------------------------------------------------------- sidebar */

@@ -49,6 +49,42 @@ python3 tools/generate.py
 Edit product details, prices, links or article text in `tools/generate.py` and re-run.
 Styles live in `assets/css/style.css` (high-contrast, WCAG AA, senior-friendly type scale).
 
+## Automatic price checking
+
+Prices live in **`data/prices.json`** (the single source of truth), separate from
+the article copy in `tools/generate.py`. A weekly GitHub Action keeps them current:
+
+1. **`.github/workflows/price-check.yml`** runs every Monday (and on-demand via
+   *Actions → Weekly Price Check → Run workflow*).
+2. **`tools/check_prices.py`** fetches each product's `scrape_url`, extracts the
+   current price (tries schema.org JSON-LD → price meta tags → an optional
+   per-product regex), and writes any change back to `prices.json` with a dated
+   history entry.
+3. The site is regenerated and, **if a price changed, auto-committed and pushed** —
+   which on GitHub Pages publishes the new price. A green **"Price Drop"** badge
+   appears on the card and review for ~45 days after a decrease, and every review
+   shows a dynamic *"last verified ⟨date⟩"* line.
+
+**Fail-safe by design:** if a page is blocked (HTTP 403) or the price can't be
+parsed, the checker **keeps the existing price** and flags the record — it never
+publishes a `$0` or blank price.
+
+**Before it pulls live numbers, you must:** put the real product-page URL in each
+product's `scrape_url`, and (if a retailer doesn't expose schema.org/meta pricing)
+add an `extract.regex` that captures the price. Heads-up: AmeriGlide and
+US Medical Supplies currently return `403` to automated requests, so out of the
+box the weekly run will safely keep prices unchanged and flag them as unreachable
+until real URLs/selectors (or a scraping service/API) are wired in.
+
+Run it locally:
+
+```bash
+python3 tools/check_prices.py --seed     # (re)build prices.json from generate.py
+python3 tools/check_prices.py --dry-run  # check live prices, write nothing
+python3 tools/check_prices.py            # check and update prices.json
+python3 tools/generate.py                # re-render the site from updated prices
+```
+
 ## Compliance notes
 
 - Affiliate relationships are disclosed in the announcement bar, in every article,

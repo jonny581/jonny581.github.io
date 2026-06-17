@@ -1,0 +1,56 @@
+name: Weekly Price Check
+
+# Checks each product's retailer price once a week. When a price changes, the
+# data file is updated, the site is regenerated, and the result is committed &
+# pushed — which on GitHub Pages publishes the new price automatically.
+# The checker is fail-safe: a blocked or unreadable page keeps the old price.
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'      # every Monday at 08:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Check prices but do not commit changes'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: price-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check prices
+        run: python3 tools/check_prices.py ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Regenerate site
+        run: python3 tools/generate.py
+
+      - name: Commit & deploy if prices changed
+        if: ${{ !inputs.dry_run }}
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: weekly price check — auto-update prices [skip ci]"
+            git push
+            echo "✅ Pushed price updates."
+          else
+            echo "No price changes this week."
+          fi

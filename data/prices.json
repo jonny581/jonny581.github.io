@@ -1,0 +1,162 @@
+{
+  "ameriglide-rave-2-stair-lift-review": {
+    "name": "AmeriGlide Rave 2 Stair Lift",
+    "retailer": "AmeriGlide",
+    "price": "$2,199",
+    "was": "$2,799",
+    "currency": "USD",
+    "scrape_url": "https://www.ameriglide.com/item/AmeriGlide---Rave-2.html",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "ameriglide-horizon-stair-lift-review": {
+    "name": "AmeriGlide Horizon Standard Stair Lift",
+    "retailer": "AmeriGlide",
+    "price": "$2,799",
+    "was": "$3,399",
+    "currency": "USD",
+    "scrape_url": "https://www.ameriglide.com/stairLiftStraight.htm",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "ameriglide-hercules-vertical-platform-lift-review": {
+    "name": "AmeriGlide Hercules II 750 Vertical Platform Lift",
+    "retailer": "AmeriGlide",
+    "price": "$6,499",
+    "was": "$7,499",
+    "currency": "USD",
+    "scrape_url": "https://www.ameriglide.com/wheelchairLifts.htm",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "ameriglide-bath-lift-review": {
+    "name": "AmeriGlide Reclining Bath Lift",
+    "retailer": "US Medical Supplies",
+    "price": "$649",
+    "was": "$899",
+    "currency": "USD",
+    "scrape_url": "https://www.usmedicalsupplies.com/bath-lifts.html",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "ameriglide-sanctuary-walk-in-tub-review": {
+    "name": "AmeriGlide Sanctuary Walk-In Tub",
+    "retailer": "AmeriGlide",
+    "price": "$4,299",
+    "was": "$5,199",
+    "currency": "USD",
+    "scrape_url": "https://www.ameriglide.com/walkInBathTubs.htm",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "golden-maxicomfort-pr510-lift-chair-review": {
+    "name": "Golden MaxiComfort Cloud PR-510 Lift Chair",
+    "retailer": "US Medical Supplies",
+    "price": "$1,999",
+    "was": "$2,549",
+    "currency": "USD",
+    "scrape_url": "https://www.usmedicalsupplies.com/lift-chairs.html",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "pride-go-go-elite-traveller-scooter-review": {
+    "name": "Pride Go-Go Elite Traveller Mobility Scooter",
+    "retailer": "US Medical Supplies",
+    "price": "$1,349",
+    "was": "$1,799",
+    "currency": "USD",
+    "scrape_url": "https://www.usmedicalsupplies.com/mobility-scooters.html",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "ameriglide-toilet-incline-lift-review": {
+    "name": "AmeriGlide Toilet Incline Lift",
+    "retailer": "AmeriGlide",
+    "price": "$1,995",
+    "was": "$2,395",
+    "currency": "USD",
+    "scrape_url": "https://www.ameriglide.com/",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "ameriglide-express-dumbwaiter-review": {
+    "name": "AmeriGlide Express Residential Dumbwaiter",
+    "retailer": "AmeriGlide",
+    "price": "$5,499",
+    "was": "$6,299",
+    "currency": "USD",
+    "scrape_url": "https://www.ameriglide.com/dumbwaiters.htm",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  },
+  "ameriglide-modular-ramp-review": {
+    "name": "AmeriGlide Aluminum Modular Ramp System",
+    "retailer": "US Medical Supplies",
+    "price": "$1,899",
+    "was": "$2,249",
+    "currency": "USD",
+    "scrape_url": "https://www.usmedicalsupplies.com/wheelchair-ramps.html",
+    "extract": {
+      "strategy": "auto",
+      "regex": null
+    },
+    "status": "seeded",
+    "last_checked": null,
+    "last_changed": null,
+    "history": []
+  }
+}

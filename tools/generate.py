@@ -6,7 +6,7 @@ product/article data below. Run from the repo root:
 
     python3 tools/generate.py
 """
-import os, html
+import os, html, json, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -780,6 +780,58 @@ def stars(rating):
     return s
 
 
+def _money_to_float(s):
+    if not s:
+        return None
+    import re
+    m = re.search(r"\d+(?:\.\d+)?", str(s).replace(",", ""))
+    return float(m.group()) if m else None
+
+
+def _fmt_date(iso):
+    """'2026-06-17T08:00:00Z' -> 'June 17, 2026'."""
+    if not iso:
+        return ""
+    try:
+        d = datetime.datetime.fromisoformat(iso.replace("Z", ""))
+        return d.strftime("%B %-d, %Y")
+    except Exception:
+        return ""
+
+
+def _is_recent_drop(rec, days=45):
+    """True if the most recent price change was a decrease within `days`."""
+    hist = rec.get("history") or []
+    if not hist:
+        return False
+    last = hist[0]
+    old, new = _money_to_float(last.get("from")), _money_to_float(last.get("to"))
+    if old is None or new is None or new >= old:
+        return False
+    changed = rec.get("last_changed")
+    if not changed:
+        return True
+    try:
+        d = datetime.datetime.fromisoformat(changed.replace("Z", ""))
+        return (datetime.datetime.utcnow() - d).days <= days
+    except Exception:
+        return True
+
+
+def apply_prices():
+    """Override product prices from data/prices.json (the price-checker's output)."""
+    path = os.path.join(ROOT, "data", "prices.json")
+    data = json.load(open(path)) if os.path.exists(path) else {}
+    for p in PRODUCTS:
+        rec = data.get(p["slug"], {})
+        if rec.get("price"):
+            p["price"] = rec["price"]
+        if rec.get("was"):
+            p["was"] = rec["was"]
+        p["price_checked"] = _fmt_date(rec.get("last_checked")) or p["date"]
+        p["price_drop"] = _is_recent_drop(rec)
+
+
 def head(title, desc, root, canonical):
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -882,6 +934,7 @@ def product_card(p, root):
   <div class="card-media">
     <a href="{root}articles/{p['slug']}.html" aria-label="Read our {p['name']} review"><img src="{root}assets/images/{p['image']}" alt="{html.escape(p['name'])} illustration" loading="lazy" width="800" height="600"></a>
     <span class="flag">{p['flag']}</span>
+    {'<span class="flag drop">▼ Price Drop</span>' if p.get('price_drop') else ''}
   </div>
   <div class="card-body">
     <span class="chip">{p['category']}</span>
@@ -1150,10 +1203,11 @@ def build_article(p):
     <p>{p['value']}</p>
 
     <div class="cta-panel">
+      {'<span class="cta-drop">▼ Price drop — now lower than last week</span>' if p.get('price_drop') else ''}
       <h3>{p['name']}</h3>
-      <div class="cta-price">{p['price']} <span style="font-size:1rem;color:#cfe3e8;text-decoration:line-through">{p['was']}</span></div>
+      <div class="cta-price">{p['price']} <span>{p['was']}</span></div>
       <a class="btn btn-primary" href="{p['link']}" target="_blank" rel="sponsored noopener">Check Today's Price at {p['retailer']} →</a>
-      <p class="small">Prices verified {p['date']}. Sale pricing and availability may change at any time.</p>
+      <p class="small">🔄 Price tracked automatically · last verified {p.get('price_checked', p['date'])}. Sale pricing and availability may change at any time.</p>
     </div>
 
     <h2>Frequently Asked Questions</h2>
@@ -1331,6 +1385,7 @@ def write(path, content):
 
 def main():
     print("Generating HomeEnabled…")
+    apply_prices()
     write("index.html", build_index())
     write("products.html", build_products())
     write("blog.html", build_blog())
