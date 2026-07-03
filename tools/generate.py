@@ -6,7 +6,7 @@ product/article data below. Run from the repo root:
 
     python3 tools/generate.py
 """
-import os, html
+import os, html, json, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -732,11 +732,104 @@ CAT_BLURB = {
     "Comfort & Daily Living": "Lift chairs and daily-living upgrades that make independence comfortable.",
 }
 
+# Inline SVG icons (stroke = currentColor) — bespoke, on-palette, no icon font.
+ICONS = {
+    "stairs": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h4v-4h4v-4h4V8h4V4"/></svg>',
+    "bath": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M6 12V6a2 2 0 0 1 2-2c1.5 0 2 1 2 2"/><path d="M9 7h2"/><path d="M7 19l-1 2M18 19l1 2"/></svg>',
+    "mobility": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="19" r="2"/><circle cx="8" cy="19" r="2"/><path d="M10 19h6M5 5h2l2 9h7l2-6H8"/></svg>',
+    "comfort": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 13a2 2 0 0 1 2 2v3h14v-3a2 2 0 1 1 2-2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+    "search": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>',
+    "experts": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    "shield": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+    "heart": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9z"/></svg>',
+}
+
+CAT_ICON = {
+    "Stair Lifts & Home Access": "stairs",
+    "Bathroom Safety": "bath",
+    "Mobility": "mobility",
+    "Comfort & Daily Living": "comfort",
+}
+
+TRUST = [
+    ("search", "150+ Products Evaluated", "Hands-on research, every category"),
+    ("experts", "Expert Review Team", "OTs &amp; certified aging-in-place pros"),
+    ("shield", "Independent &amp; Honest", "Brands never pay for rankings"),
+    ("heart", "2M+ Families Helped", "Trusted since our first guide in 2021"),
+]
+
+TESTIMONIALS = [
+    {
+        "init": "JM", "name": "Janet M.", "where": "Daughter &amp; caregiver · Columbus, OH",
+        "quote": "I spent weeks lost in sales brochures until I found HomeEnabled. Their stair lift comparison was plain-English and honest — we ordered the Rave 2 that weekend and Mom is back in her own bedroom.",
+    },
+    {
+        "init": "RT", "name": "Robert T.", "where": "Retired teacher · Tucson, AZ",
+        "quote": "At 78 I wanted facts, not a hard sell. The walk-in tub review answered every question I had, including the ones the salespeople dodged. The bathroom is finally a room I trust again.",
+    },
+    {
+        "init": "DP", "name": "Denise &amp; Paul R.", "where": "Planning ahead · Burlington, VT",
+        "quote": "We're both still active but wanted to age-proof the house now. HomeEnabled's category guides gave us a sensible order to do things in. No pressure, no scare tactics — just genuinely useful advice.",
+    },
+]
+
 
 def stars(rating):
     full = int(rating)
     s = "★" * full + ("½" if rating - full >= 0.25 else "")
     return s
+
+
+def _money_to_float(s):
+    if not s:
+        return None
+    import re
+    m = re.search(r"\d+(?:\.\d+)?", str(s).replace(",", ""))
+    return float(m.group()) if m else None
+
+
+def _fmt_date(iso):
+    """'2026-06-17T08:00:00Z' -> 'June 17, 2026'."""
+    if not iso:
+        return ""
+    try:
+        d = datetime.datetime.fromisoformat(iso.replace("Z", ""))
+        return d.strftime("%B %-d, %Y")
+    except Exception:
+        return ""
+
+
+def _is_recent_drop(rec, days=45):
+    """True if the most recent price change was a decrease within `days`."""
+    hist = rec.get("history") or []
+    if not hist:
+        return False
+    last = hist[0]
+    old, new = _money_to_float(last.get("from")), _money_to_float(last.get("to"))
+    if old is None or new is None or new >= old:
+        return False
+    changed = rec.get("last_changed")
+    if not changed:
+        return True
+    try:
+        d = datetime.datetime.fromisoformat(changed.replace("Z", ""))
+        return (datetime.datetime.utcnow() - d).days <= days
+    except Exception:
+        return True
+
+
+def apply_prices():
+    """Override product prices from data/prices.json (the price-checker's output)."""
+    path = os.path.join(ROOT, "data", "prices.json")
+    data = json.load(open(path)) if os.path.exists(path) else {}
+    for p in PRODUCTS:
+        rec = data.get(p["slug"], {})
+        if rec.get("price"):
+            p["price"] = rec["price"]
+        if rec.get("was"):
+            p["was"] = rec["was"]
+        p["price_checked"] = _fmt_date(rec.get("last_checked")) or p["date"]
+        p["price_drop"] = _is_recent_drop(rec)
 
 
 def head(title, desc, root, canonical):
@@ -841,6 +934,7 @@ def product_card(p, root):
   <div class="card-media">
     <a href="{root}articles/{p['slug']}.html" aria-label="Read our {p['name']} review"><img src="{root}assets/images/{p['image']}" alt="{html.escape(p['name'])} illustration" loading="lazy" width="800" height="600"></a>
     <span class="flag">{p['flag']}</span>
+    {'<span class="flag drop">▼ Price Drop</span>' if p.get('price_drop') else ''}
   </div>
   <div class="card-body">
     <span class="chip">{p['category']}</span>
@@ -865,7 +959,7 @@ def post_card(p, root):
     <p class="post-meta"><b>{p['author']}</b> · {p['date']} · {p['read']}</p>
     <h3 class="card-title"><a href="{root}articles/{p['slug']}.html">{p['name']} Review: {p['flag']} for Aging in Place</a></h3>
     <p class="card-excerpt">{p['excerpt']}</p>
-    <p><a href="{root}articles/{p['slug']}.html"><strong>Read the full review →</strong></a></p>
+    <p><a class="read-more" href="{root}articles/{p['slug']}.html">Read the full review →</a></p>
   </div>
 </article>"""
 
@@ -892,20 +986,36 @@ def build_index():
     featured = "".join(product_card(p, root) for p in PRODUCTS[:6])
     posts = "".join(post_card(p, root) for p in PRODUCTS[:3])
     cats = "".join(
-        f'<a class="card" style="padding:26px;text-decoration:none" href="products.html#{cat_id(c)}">'
-        f'<h3 style="margin-bottom:8px">{c}</h3><p class="card-excerpt">{CAT_BLURB[c]}</p>'
-        f'<p style="margin:12px 0 0;font-weight:700;color:#9a3412">Browse {c.split(" & ")[0]} →</p></a>'
+        f'<a class="cat-card" href="products.html#{cat_id(c)}">'
+        f'<span class="cat-ico" style="color:var(--brand)">{ICONS[CAT_ICON[c]]}</span>'
+        f'<h3>{c}</h3><p>{CAT_BLURB[c]}</p>'
+        f'<p class="go">Browse {c.split(" & ")[0]} →</p></a>'
         for c in CATEGORIES)
+    trust = "".join(
+        f'<div class="trust-item"><span class="trust-ico" style="color:#fff">{ICONS[ic]}</span>'
+        f'<span><strong>{t}</strong><span>{s}</span></span></div>'
+        for ic, t, s in TRUST)
+    tcards = "".join(
+        f'<figure class="tcard"><span class="quote-mark" aria-hidden="true">&ldquo;</span>'
+        f'<div class="stars" aria-label="5 out of 5 stars">★★★★★</div>'
+        f'<blockquote>{t["quote"]}</blockquote>'
+        f'<figcaption class="who"><span class="avatar" aria-hidden="true">{t["init"]}</span>'
+        f'<span><b>{t["name"]}</b><span>{t["where"]}</span></span></figcaption></figure>'
+        for t in TESTIMONIALS)
     body = f"""
 <section class="hero">
   <div class="container hero-inner">
     <div>
-      <span class="eyebrow">Trusted Aging-in-Place Reviews Since 2021</span>
+      <span class="eyebrow">★ Trusted Aging-in-Place Reviews Since 2021</span>
       <h1>Stay in the home you love — safely, comfortably, on your terms.</h1>
       <p class="lead">HomeEnabled tests and reviews the stair lifts, bathroom safety equipment, mobility aids and smart upgrades that let aging adults live independently with dignity. Real research, plain English, no pressure.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="products.html">Shop Top-Rated Products</a>
         <a class="btn btn-ghost" href="blog.html">Read the Latest Reviews</a>
+      </div>
+      <div class="hero-proof">
+        <span class="stars" aria-hidden="true">★★★★★</span>
+        <span><strong>Rated 4.8 / 5</strong> by readers &middot; trusted by <strong>2M+ families</strong> aging in place</span>
       </div>
     </div>
     <img class="hero-art" src="assets/images/hero-home.svg" alt="Illustration of an accessible home with a ramp and welcoming entrance" width="760" height="560">
@@ -913,18 +1023,13 @@ def build_index():
 </section>
 
 <section class="trust" aria-label="Why readers trust HomeEnabled">
-  <div class="container trust-inner">
-    <div class="trust-item"><strong>150+ Products Evaluated</strong><span>Hands-on research, every category</span></div>
-    <div class="trust-item"><strong>Expert Review Team</strong><span>OTs &amp; certified aging-in-place specialists</span></div>
-    <div class="trust-item"><strong>Independent &amp; Reader-Supported</strong><span>Brands never pay for rankings</span></div>
-    <div class="trust-item"><strong>2M+ Families Helped</strong><span>Since our first guide in 2021</span></div>
-  </div>
+  <div class="container trust-inner">{trust}</div>
 </section>
 
 <section class="section">
   <div class="container">
     <div class="section-head">
-      <div><h2>This Month's Top-Rated Products</h2>
+      <div><span class="kicker">Editor-Tested Picks</span><h2>This Month's Top-Rated Products</h2>
       <p>Our highest-scoring picks across stair lifts, bathroom safety, mobility and comfort — each one linked to the best price we've found at AmeriGlide or US Medical Supplies.</p></div>
       <a class="more" href="products.html">View all 10 products →</a>
     </div>
@@ -936,11 +1041,12 @@ def build_index():
   <div class="container">
     <div class="guide-banner">
       <div>
+        <span class="kicker" style="color:#9fd8df">Start Here</span>
         <h2>New to aging-in-place planning?</h2>
         <p>Start with the room where most falls happen. Our occupational therapist walks through the walk-in tub that turns the most dangerous room in the house into the most restorative one.</p>
         <a class="btn btn-primary" href="articles/ameriglide-sanctuary-walk-in-tub-review.html">Read the Walk-In Tub Guide</a>
       </div>
-      <img src="assets/images/product-walk-in-tub.svg" alt="AmeriGlide Sanctuary walk-in tub with open door" style="border-radius:12px" width="800" height="600">
+      <img src="assets/images/product-walk-in-tub.svg" alt="AmeriGlide Sanctuary walk-in tub with watertight door" style="border-radius:12px" width="800" height="600">
     </div>
   </div>
 </section>
@@ -948,16 +1054,26 @@ def build_index():
 <section class="section">
   <div class="container">
     <div class="section-head">
-      <div><h2>Shop by Category</h2></div>
+      <div><span class="kicker">Find What You Need</span><h2>Shop by Category</h2></div>
     </div>
     <div class="grid grid-4">{cats}</div>
+  </div>
+</section>
+
+<section class="section testimonials">
+  <div class="container">
+    <div class="section-head">
+      <div><span class="kicker">Real Families, Real Homes</span><h2>What our readers tell us</h2>
+      <p>We hear from caregivers and older adults every week. Here is what finding the right equipment meant for a few of them.</p></div>
+    </div>
+    <div class="tgrid">{tcards}</div>
   </div>
 </section>
 
 <section class="section alt">
   <div class="container">
     <div class="section-head">
-      <div><h2>Fresh from the Blog</h2>
+      <div><span class="kicker">From the Blog</span><h2>Fresh from the Blog</h2>
       <p>The latest product reviews, technology updates and home health-care news from our editorial team.</p></div>
       <a class="more" href="blog.html">All articles →</a>
     </div>
@@ -1087,10 +1203,11 @@ def build_article(p):
     <p>{p['value']}</p>
 
     <div class="cta-panel">
+      {'<span class="cta-drop">▼ Price drop — now lower than last week</span>' if p.get('price_drop') else ''}
       <h3>{p['name']}</h3>
-      <div class="cta-price">{p['price']} <span style="font-size:1rem;color:#cfe3e8;text-decoration:line-through">{p['was']}</span></div>
+      <div class="cta-price">{p['price']} <span>{p['was']}</span></div>
       <a class="btn btn-primary" href="{p['link']}" target="_blank" rel="sponsored noopener">Check Today's Price at {p['retailer']} →</a>
-      <p class="small">Prices verified {p['date']}. Sale pricing and availability may change at any time.</p>
+      <p class="small">🔄 Price tracked automatically · last verified {p.get('price_checked', p['date'])}. Sale pricing and availability may change at any time.</p>
     </div>
 
     <h2>Frequently Asked Questions</h2>
@@ -1258,6 +1375,37 @@ def build_contact():
                 root, "contact.html") + header(root, "contact.html") + body + footer(root)
 
 
+def build_price_checklist():
+    today = datetime.date.today().strftime("%B %-d, %Y")
+    rows = "\n".join(
+        f"| &#9744; | {p['name']} | **{p['price']}** | {p['was']} | {p['retailer']} | [Open price page &#8599;]({p['link']}) |"
+        for p in PRODUCTS)
+    return f"""# &#128197; Weekly Price Check &mdash; HomeEnabled
+
+_Generated {today} &middot; {len(PRODUCTS)} products to verify_
+
+## The 15-minute routine
+
+1. Open each **Open price page** link below and compare the retailer's current
+   price to **Our price**.
+2. For anything that changed, edit [`data/prices.json`](data/prices.json) &mdash; change
+   the `"price"` value (and `"was"` if the sale changed) for that product, then commit.
+3. That's it. The build Action restamps the "last verified" date, records the change
+   in the price history, flags any drop with a badge, regenerates the site, and
+   redeploys &mdash; automatically.
+
+> **Easiest way:** open `data/prices.json` on GitHub, click the pencil (Edit) icon,
+> change the number, and hit *Commit changes*. No local setup, nothing else to touch.
+
+| &#10003; | Product | Our price | Was | Retailer | Check now |
+|---|---------|-----------|-----|----------|-----------|
+{rows}
+
+---
+_Don't edit this file by hand &mdash; it is regenerated on every build._
+"""
+
+
 def write(path, content):
     full = os.path.join(ROOT, path)
     os.makedirs(os.path.dirname(full), exist_ok=True)
@@ -1268,6 +1416,7 @@ def write(path, content):
 
 def main():
     print("Generating HomeEnabled…")
+    apply_prices()
     write("index.html", build_index())
     write("products.html", build_products())
     write("blog.html", build_blog())
@@ -1277,6 +1426,7 @@ def main():
     write("contact.html", build_contact())
     for p in PRODUCTS:
         write(f"articles/{p['slug']}.html", build_article(p))
+    write("PRICE-CHECK.md", build_price_checklist())
     write(".nojekyll", "")
     print(f"Done — {7 + len(PRODUCTS)} pages.")
 

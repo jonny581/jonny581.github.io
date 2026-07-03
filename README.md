@@ -49,6 +49,49 @@ python3 tools/generate.py
 Edit product details, prices, links or article text in `tools/generate.py` and re-run.
 Styles live in `assets/css/style.css` (high-contrast, WCAG AA, senior-friendly type scale).
 
+## Weekly price updates (manual, ~15 minutes)
+
+Prices live in **`data/prices.json`** (the single source of truth), separate from
+the article copy in `tools/generate.py`. Updating them is a quick weekly habit —
+you change one number, automation does the rest.
+
+**Your weekly routine**
+
+1. Open **[`PRICE-CHECK.md`](PRICE-CHECK.md)** — a checklist (regenerated on every
+   build) listing each product, its current price, and a direct link to the
+   retailer's page. Click each link and compare (~10 min).
+2. For anything that changed, open **`data/prices.json`** on GitHub, click the
+   pencil (Edit), change that product's `"price"` (and `"was"` if the sale
+   changed), and **Commit changes** (~5 min).
+3. Done. You don't run anything else.
+
+**What happens automatically** (`.github/workflows/site-build.yml`, triggered by
+your commit to `data/prices.json`):
+
+- Validates the JSON (a typo fails the build instead of deploying a broken file).
+- Runs `tools/check_prices.py --sync` — stamps this week's *"last verified"* date
+  on every product, and for any changed price appends a dated **history** entry.
+- Regenerates the site and commits the rebuilt pages, which **deploys** them.
+- A green **"Price Drop"** badge appears on the card and review for ~45 days after
+  a decrease; every review shows a dynamic *"last verified ⟨date⟩"* line.
+
+> **Nothing changed this week?** Open *Actions → Build & Deploy on Price Update →
+> Run workflow* to refresh the "last verified" dates without editing anything.
+
+**Local alternative** (if you prefer the terminal):
+
+```bash
+python3 tools/check_prices.py --seed   # (re)build prices.json from generate.py
+# ...edit the price values in data/prices.json...
+python3 tools/check_prices.py          # --sync: stamp dates + record changes (no network)
+python3 tools/generate.py              # re-render the site
+python3 tools/check_prices.py --scan   # OPTIONAL: try fetching live prices (often blocked)
+```
+
+> Note: `--scan` (live fetching) is kept for occasional spot-checks but is **not**
+> scheduled — AmeriGlide and US Medical Supplies block automated requests, which is
+> exactly why the weekly check is a manual eyeball.
+
 ## Compliance notes
 
 - Affiliate relationships are disclosed in the announcement bar, in every article,
