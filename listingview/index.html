@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ListingView — Etsy Product Research &amp; Listing Optimization</title>
+  <meta name="description" content="Research what sells on Etsy: explore listings, analyze keywords, score your SEO, generate tags, and bulk-edit listings — all in one dashboard. Demo build with sample data.">
+  <link rel="stylesheet" href="assets/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M8 22 L13 14 L18 18 L24 9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar" aria-label="Main navigation">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">⌕</span>
+        <span>ListingView<small>Etsy research suite</small></span>
+      </div>
+
+      <div class="nav-label">Research</div>
+      <a class="nav-item" href="#/dashboard"><span class="ico">▦</span> Dashboard</a>
+      <a class="nav-item" href="#/explorer"><span class="ico">🔎</span> Listing Explorer</a>
+      <a class="nav-item" href="#/keywords"><span class="ico">⌨</span> Keyword Finder</a>
+      <a class="nav-item" href="#/shops"><span class="ico">🏪</span> Shop Explorer</a>
+
+      <div class="nav-label">Optimize</div>
+      <a class="nav-item" href="#/score"><span class="ico">✓</span> Listing Score</a>
+      <a class="nav-item" href="#/tags"><span class="ico">#</span> Tag Generator</a>
+      <a class="nav-item" href="#/bulk"><span class="ico">✎</span> Bulk Editor</a>
+
+      <div class="sidebar-foot">
+        Demo build · sample data only.<br>
+        Not affiliated with Etsy, Inc.
+      </div>
+    </nav>
+
+    <main class="main" id="view" aria-live="polite"></main>
+  </div>
+
+  <div class="drawer-scrim" id="drawer-scrim"></div>
+  <aside class="drawer" id="drawer" aria-label="Listing details"></aside>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
