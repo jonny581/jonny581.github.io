@@ -2,7 +2,7 @@
 "use strict";
 
 (() => {
-  const { listings, shops, CATEGORIES, MONTHS, strHash } = LV;
+  const { listings, shops, CATEGORIES, MONTHS, strHash, assets, FOLDERS, CUSTOMERS, nextAssetId } = LV;
   const $ = (sel, el = document) => el.querySelector(sel);
   const main = () => $("#view");
 
@@ -407,6 +407,8 @@
       <div class="meta">${esc(l.category)} · Listed ${l.ageMonths} months ago</div>
       <h2>${esc(l.title)}</h2>
       <div class="meta">${esc(l.shop)} · ${esc(shop.country)} · ★ ${l.rating} (${fmt.format(l.reviews)} reviews)</div>
+      <h3>Photos</h3>
+      ${slotStrip(l.photos, true)}
       <div class="kv-grid">
         <div class="kv"><div class="k">Price</div><div class="v">${usd2(l.price)}</div></div>
         <div class="kv"><div class="k">Sales / month</div><div class="v">${fmt.format(l.sales30)}</div></div>
@@ -604,6 +606,7 @@
             <option value="price">Adjust prices by %</option>
             <option value="prefix">Add title prefix</option>
             <option value="suffix">Add title suffix</option>
+            <option value="photos">Photos — add, delete, or swap images</option>
           </select>
           <div id="bk-fields"></div>
           <div class="copy-row"><button class="btn primary" id="bk-preview">Preview changes</button></div>
@@ -636,8 +639,36 @@
         <p style="color:var(--muted);font-size:12.5px;margin-top:6px">Positive raises prices, negative lowers them. Rounded to .99 endings.</p>`,
       prefix: `<label class="field-label">Prefix to add</label><input class="input" id="bk-text" style="width:100%" placeholder="e.g. SALE · ">`,
       suffix: `<label class="field-label">Suffix to add</label><input class="input" id="bk-text" style="width:100%" placeholder="e.g.  | Free Shipping">`,
+      photos: `<label class="field-label">Photo action</label>
+        <select class="input" id="bk-ph-act" style="width:100%">
+          <option value="add">Add an image to a slot</option>
+          <option value="delete">Delete a slot's image</option>
+          <option value="swap">Swap two slot positions</option>
+        </select>
+        <div id="bk-ph-fields"></div>`,
     };
-    const renderFields = () => { $("#bk-fields").innerHTML = fieldTemplates[$("#bk-op").value]; };
+    const slotOptions = (sel) => [1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${n === sel ? "selected" : ""}>Slot ${n}</option>`).join("");
+    const renderPhFields = () => {
+      const act = $("#bk-ph-act").value;
+      const imgs = imageAssets();
+      $("#bk-ph-fields").innerHTML = act === "add"
+        ? `<label class="field-label">Image (from Asset Library)</label>
+           <select class="input" id="bk-ph-img" style="width:100%">${imgs.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join("")}</select>
+           <label class="field-label">Into slot</label>
+           <select class="input" id="bk-ph-slot" style="width:100%"><option value="empty">First empty slot</option>${slotOptions()}</select>
+           <p style="color:var(--muted);font-size:12.5px;margin-top:6px">Generate mockups first and they show up here via the Mockups folder.</p>`
+        : act === "delete"
+        ? `<label class="field-label">Slot to clear</label><select class="input" id="bk-ph-slot" style="width:100%">${slotOptions()}</select>`
+        : `<label class="field-label">Swap slot</label><select class="input" id="bk-ph-a" style="width:100%">${slotOptions(1)}</select>
+           <label class="field-label">With slot</label><select class="input" id="bk-ph-b" style="width:100%">${slotOptions(2)}</select>`;
+    };
+    const renderFields = () => {
+      $("#bk-fields").innerHTML = fieldTemplates[$("#bk-op").value];
+      if ($("#bk-op").value === "photos") {
+        renderPhFields();
+        $("#bk-ph-act").addEventListener("change", renderPhFields);
+      }
+    };
 
     function computeChanges() {
       const op = $("#bk-op").value;
@@ -655,6 +686,24 @@
           let next = l.price * (1 + pct / 100);
           next = Math.max(0.99, Math.round(next) - 0.01);
           if (Math.abs(next - l.price) >= 0.01) changes.push({ l, field: "price", from: usd2(l.price), to: usd2(next), raw: next });
+        } else if (op === "photos") {
+          const act = $("#bk-ph-act").value;
+          const from = l.photos.slice();
+          const to = from.slice();
+          if (act === "add") {
+            const img = assets.find((a) => a.id === +$("#bk-ph-img").value);
+            if (!img || !img.src) continue;
+            const sv = $("#bk-ph-slot").value;
+            const idx = sv === "empty" ? to.indexOf(null) : +sv - 1;
+            if (idx >= 0 && to[idx] !== img.src) to[idx] = img.src;
+          } else if (act === "delete") {
+            const idx = +$("#bk-ph-slot").value - 1;
+            if (to[idx] !== null) to[idx] = null;
+          } else {
+            const a = +$("#bk-ph-a").value - 1, b = +$("#bk-ph-b").value - 1;
+            if (a !== b && (to[a] || to[b])) { const tmp = to[a]; to[a] = to[b]; to[b] = tmp; }
+          }
+          if (to.some((p, i) => p !== from[i])) changes.push({ l, field: "photos", from, to });
         } else {
           const text = $("#bk-text").value;
           if (!text) continue;
@@ -676,8 +725,8 @@
         <div class="table-wrap"><table class="data">
           <thead><tr><th>Shop</th><th class="wrap">Before</th><th class="wrap">After</th></tr></thead>
           <tbody>${changes.map((c) => `<tr><td>${esc(c.l.shop)}</td>
-            <td class="wrap"><span class="diff-del">${esc(c.from)}</span></td>
-            <td class="wrap"><span class="diff-add">${esc(c.to)}</span></td></tr>`).join("")}</tbody>
+            <td class="wrap">${c.field === "photos" ? slotStrip(c.from) : `<span class="diff-del">${esc(c.from)}</span>`}</td>
+            <td class="wrap">${c.field === "photos" ? slotStrip(c.to) : `<span class="diff-add">${esc(c.to)}</span>`}</td></tr>`).join("")}</tbody>
         </table></div>
         <div class="copy-row"><button class="btn primary" id="bk-apply">Apply ${changes.length} change${changes.length === 1 ? "" : "s"}</button>
         <span style="color:var(--muted);font-size:12.5px">Demo mode: changes update the in-app dataset only.</span></div>
@@ -685,7 +734,8 @@
       $("#bk-apply").addEventListener("click", () => {
         for (const c of changes) {
           if (c.field === "title") { c.l.title = c.to; c.l.seo = listingSeo(c.l); }
-          else { c.l.price = c.raw; c.l.revenue30 = Math.round(c.l.sales30 * c.raw); }
+          else if (c.field === "price") { c.l.price = c.raw; c.l.revenue30 = Math.round(c.l.sales30 * c.raw); }
+          else c.l.photos = c.to;
         }
         toast(`${changes.length} listing${changes.length === 1 ? "" : "s"} updated`);
         $("#bk-out").innerHTML = "";
@@ -741,6 +791,345 @@
       }));
     };
     render();
+  };
+
+  // ---- shared: photo slot strip ----------------------------------------------
+  const slotStrip = (photos, big = false) => `<div class="slot-strip">${photos.map((p, i) =>
+    `<span class="slot ${big ? "big" : ""} ${p ? "" : "empty"}"><span class="sn">${i + 1}</span>${p ? `<img src="${p}" alt="Photo ${i + 1}">` : ""}</span>`).join("")}</div>`;
+
+  const fmtBytes = (b) => b >= 1024 * 1024 * 1024 ? (b / (1024 ** 3)).toFixed(1) + " GB"
+    : b >= 1024 * 1024 ? (b / (1024 ** 2)).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
+  const FILE_ICONS = { video: "🎞", archive: "🗜", doc: "📄", audio: "🎵" };
+  const imageAssets = () => assets.filter((a) => a.type === "image" && a.src);
+
+  // -- Asset Library --
+  const libState = { folder: "" };
+  routes.library = () => {
+    main().innerHTML = `
+      ${header("Asset Library", "The home for every file, image, or design you sell. Upload once, then sell files as digital downloads or turn designs into listing photos with the Mockup Generator.")}
+      <div class="card">
+        <div class="dropzone" id="lib-drop">
+          <strong>Drop files here</strong> or
+          <button class="btn small" id="lib-upload-btn">Browse files</button>
+          <input type="file" id="lib-upload" multiple accept="image/*,video/*,.zip,.pdf,.ai,.psd" hidden>
+          <div style="font-size:12px;margin-top:4px">Images become designs you can mock up instantly. Demo mode: uploads stay in this browser tab.</div>
+        </div>
+        <div class="folder-chips" id="lib-folders"></div>
+        <div class="asset-grid" id="lib-grid"></div>
+        <div class="pager" id="lib-totals" style="justify-content:flex-start"></div>
+      </div>`;
+    wireTheme();
+
+    const renderLib = () => {
+      const chips = [["", "All files"], ...FOLDERS.map((f) => [f, f])];
+      $("#lib-folders").innerHTML = chips.map(([v, lb]) => {
+        const n = v ? assets.filter((a) => a.folder === v).length : assets.length;
+        return `<button class="folder-chip ${libState.folder === v ? "active" : ""}" data-f="${esc(v)}">${esc(lb)} <span class="cnt">${n}</span></button>`;
+      }).join("");
+      $("#lib-folders").querySelectorAll("[data-f]").forEach((b) =>
+        b.addEventListener("click", () => { libState.folder = b.dataset.f; renderLib(); }));
+
+      const rows = assets.filter((a) => !libState.folder || a.folder === libState.folder);
+      $("#lib-grid").innerHTML = rows.length ? rows.map((a) => `
+        <div class="asset-card">
+          <div class="asset-thumb">${a.src ? `<img src="${a.src}" alt="${esc(a.name)}">` : `<span class="file-ico">${FILE_ICONS[a.type] || "📄"}</span>`}</div>
+          <div class="asset-body">
+            <div class="a-name" title="${esc(a.name)}">${esc(a.name)}</div>
+            <div class="a-meta">${esc(a.folder)} · ${fmtBytes(a.size)}</div>
+            <div class="asset-actions">
+              ${a.type === "image" ? `<button class="btn primary" data-mock="${a.id}">Mockups</button>` : ""}
+              <button class="btn" data-del="${a.id}">Delete</button>
+            </div>
+          </div>
+        </div>`).join("") : `<div class="empty" style="grid-column:1/-1">This folder is empty — drop files above.</div>`;
+
+      const totalB = assets.reduce((s, a) => s + a.size, 0);
+      $("#lib-totals").textContent = `${assets.length} files · ${fmtBytes(totalB)}`;
+
+      $("#lib-grid").querySelectorAll("[data-mock]").forEach((b) => b.addEventListener("click", () => {
+        mockState.assetId = +b.dataset.mock;
+        location.hash = "#/mockups";
+      }));
+      $("#lib-grid").querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => {
+        const i = assets.findIndex((a) => a.id === +b.dataset.del);
+        if (i >= 0) { assets.splice(i, 1); renderLib(); toast("File deleted"); }
+      }));
+    };
+
+    function addFiles(fileList) {
+      const files = [...fileList];
+      let pending = files.length;
+      if (!pending) return;
+      for (const f of files) {
+        const type = f.type.startsWith("image/") ? "image" : f.type.startsWith("video/") ? "video"
+          : /zip|compressed/.test(f.type) ? "archive" : "doc";
+        const asset = { id: nextAssetId(), name: f.name, folder: libState.folder || (type === "image" ? "Designs" : "Source"), type, size: f.size };
+        assets.unshift(asset);
+        if (type === "image") {
+          const r = new FileReader();
+          r.onload = () => { asset.src = r.result; if (--pending === 0) renderLib(); };
+          r.readAsDataURL(f);
+        } else if (--pending === 0) renderLib();
+      }
+      renderLib();
+      toast(`${files.length} file${files.length === 1 ? "" : "s"} added`);
+    }
+
+    const drop = $("#lib-drop");
+    drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+    drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); addFiles(e.dataTransfer.files); });
+    $("#lib-upload-btn").addEventListener("click", () => $("#lib-upload").click());
+    $("#lib-upload").addEventListener("change", (e) => addFiles(e.target.files));
+    renderLib();
+  };
+
+  // -- Mockup Generator --
+  const mockState = { assetId: null, scale: 100, offsetY: 0, results: [] };
+  routes.mockups = () => {
+    main().innerHTML = `
+      ${header("Mockup Generator", "One design becomes a full set of product mockups in seconds. Pick a design from your Asset Library — or upload one — and it renders onto every product below.")}
+      <div class="grid two">
+        <div class="card">
+          <h2>Design</h2>
+          <div class="card-sub">Any image works: PNG, JPG, WebP or SVG. Transparent PNGs look best.</div>
+          <div class="controls">
+            <button class="btn" id="mk-upload-btn">Upload a design</button>
+            <input type="file" id="mk-upload" accept="image/*" hidden>
+            <a class="btn" href="#/library">Open Asset Library</a>
+          </div>
+          <div class="design-grid" id="mk-designs"></div>
+          <div class="slider-row"><span style="min-width:86px">Design size</span>
+            <input type="range" id="mk-scale" min="50" max="150" value="${mockState.scale}"><span class="sv" id="mk-scale-v">${mockState.scale}%</span></div>
+          <div class="slider-row"><span style="min-width:86px">Position</span>
+            <input type="range" id="mk-off" min="-30" max="30" value="${mockState.offsetY}"><span class="sv" id="mk-off-v">${mockState.offsetY}</span></div>
+        </div>
+        <div class="card">
+          <h2>Use the set</h2>
+          <div class="card-sub">Every mockup below is a real rendered image — download it, save it to the library, or apply the whole set as a listing's photos.</div>
+          <button class="btn" id="mk-save" disabled>Save set to Asset Library</button>
+          <label class="field-label" for="mk-listing">Apply as listing photos</label>
+          <div class="controls" style="margin-bottom:0">
+            <select class="input grow" id="mk-listing">
+              ${listings.slice().sort((a, b) => b.revenue30 - a.revenue30).slice(0, 40).map((l) =>
+                `<option value="${l.id}">${esc(l.title.split("|")[0].trim())} — ${esc(l.shop)}</option>`).join("")}
+            </select>
+            <button class="btn primary" id="mk-apply" disabled>Apply 6 photos</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 id="mk-status">Mockups</h2>
+        <div class="mock-grid" id="mk-grid" style="margin-top:10px">
+          ${LVMock.templates.map((t) => `<div class="mock-card"><div class="asset-thumb" style="aspect-ratio:1"><span class="file-ico">🖼</span></div><div class="m-foot"><span>${esc(t.name)}</span></div></div>`).join("")}
+        </div>
+      </div>`;
+    wireTheme();
+
+    const designs = imageAssets();
+    if (!mockState.assetId || !designs.some((a) => a.id === mockState.assetId)) {
+      mockState.assetId = designs.length ? designs[0].id : null;
+    }
+    const renderPicks = () => {
+      $("#mk-designs").innerHTML = designs.map((a) =>
+        `<button class="design-pick ${a.id === mockState.assetId ? "active" : ""}" data-id="${a.id}" title="${esc(a.name)}"><img src="${a.src}" alt="${esc(a.name)}"></button>`).join("")
+        || `<div class="empty">No images in the library yet — upload one.</div>`;
+      $("#mk-designs").querySelectorAll("[data-id]").forEach((b) => b.addEventListener("click", () => {
+        mockState.assetId = +b.dataset.id;
+        renderPicks(); render();
+      }));
+    };
+
+    let renderSeq = 0;
+    async function render() {
+      const a = assets.find((x) => x.id === mockState.assetId);
+      if (!a || !a.src) return;
+      const seq = ++renderSeq;
+      $("#mk-status").textContent = `Mockups — rendering “${a.name}”…`;
+      try {
+        const results = await LVMock.renderAll(a.src, { scale: mockState.scale / 100, offsetY: mockState.offsetY / 100 });
+        if (seq !== renderSeq) return;
+        mockState.results = results;
+        $("#mk-grid").innerHTML = "";
+        for (const r of results) {
+          const card = document.createElement("div");
+          card.className = "mock-card";
+          card.appendChild(r.canvas);
+          const foot = document.createElement("div");
+          foot.className = "m-foot";
+          foot.innerHTML = `<span>${esc(r.name)}</span><button class="btn small" data-dl="${r.id}">Download</button>`;
+          card.appendChild(foot);
+          $("#mk-grid").appendChild(card);
+        }
+        $("#mk-grid").querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+          const r = mockState.results.find((x) => x.id === b.dataset.dl);
+          const link = document.createElement("a");
+          link.download = `mockup-${r.id}-${a.name.replace(/\.[^.]+$/, "")}.png`;
+          link.href = r.canvas.toDataURL("image/png");
+          link.click();
+        }));
+        $("#mk-status").textContent = `Mockups — “${a.name}” on ${results.length} products`;
+        $("#mk-save").disabled = $("#mk-apply").disabled = false;
+      } catch {
+        $("#mk-status").textContent = "Mockups — couldn't load that image";
+      }
+    }
+
+    $("#mk-upload-btn").addEventListener("click", () => $("#mk-upload").click());
+    $("#mk-upload").addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        const asset = { id: nextAssetId(), name: f.name, folder: "Designs", type: "image", size: f.size, src: r.result };
+        assets.unshift(asset);
+        designs.unshift(asset);
+        mockState.assetId = asset.id;
+        renderPicks(); render();
+        toast(`“${f.name}” added to Designs`);
+      };
+      r.readAsDataURL(f);
+    });
+    const wireSlider = (id, key, suffix) => {
+      $(id).addEventListener("input", (e) => {
+        mockState[key] = +e.target.value;
+        $(id + "-v").textContent = e.target.value + suffix;
+        clearTimeout(mockState._h);
+        mockState._h = setTimeout(render, 120);
+      });
+    };
+    wireSlider("#mk-scale", "scale", "%");
+    wireSlider("#mk-off", "offsetY", "");
+
+    $("#mk-save").addEventListener("click", () => {
+      const a = assets.find((x) => x.id === mockState.assetId);
+      for (const r of mockState.results) {
+        const src = r.canvas.toDataURL("image/png");
+        assets.unshift({ id: nextAssetId(), name: `${r.id}-${a.name.replace(/\.[^.]+$/, "")}.png`, folder: "Mockups", type: "image", size: Math.round(src.length * 0.75), src });
+      }
+      toast(`${mockState.results.length} mockups saved to the Mockups folder`);
+    });
+    $("#mk-apply").addEventListener("click", () => {
+      const l = listings.find((x) => x.id === +$("#mk-listing").value);
+      l.photos = mockState.results.map((r) => r.canvas.toDataURL("image/png"));
+      toast(`Photos applied to “${l.title.split("|")[0].trim()}”`);
+      openDrawer(l.id);
+    });
+
+    renderPicks();
+    if (mockState.assetId) render();
+  };
+
+  // -- Digital Delivery --
+  const delState = { listingId: null, byListing: new Map() };
+  routes.delivery = () => {
+    const digital = listings.filter((l) => l.category === "Digital Downloads");
+    if (!delState.listingId) delState.listingId = digital[0].id;
+    main().innerHTML = `
+      ${header("Digital Delivery", "Attach Asset Library folders to a listing. When a customer buys, their files land in their inbox automatically — no Drive links, no link-rot.")}
+      <div class="grid two">
+        <div class="card">
+          <h2>Listing</h2>
+          <select class="input" id="dl-listing" style="width:100%;margin-top:8px">
+            ${digital.map((l) => `<option value="${l.id}" ${l.id === delState.listingId ? "selected" : ""}>#${4000 + l.id} · ${esc(l.title.split("|")[0].trim())}</option>`).join("")}
+          </select>
+          <h2 style="margin-top:18px">Attached folders <span id="dl-count" style="color:var(--muted);font-weight:500"></span></h2>
+          <div class="attach-row" id="dl-attach"></div>
+          <p id="dl-summary" style="color:var(--ink-2);font-size:13px;margin-top:10px"></p>
+        </div>
+        <div class="card">
+          <h2>Checkout queue</h2>
+          <div class="card-sub">Simulated buyers. Hit Deliver to watch the automation run.</div>
+          <ul class="cust-list" id="dl-cust"></ul>
+          <div class="progress-bar"><i id="dl-prog"></i></div>
+          <div class="copy-row">
+            <button class="btn primary" id="dl-go">Deliver downloads</button>
+            <span id="dl-stat" style="color:var(--muted);font-size:12.5px"></span>
+          </div>
+        </div>
+      </div>`;
+    wireTheme();
+
+    const state = () => {
+      if (!delState.byListing.has(delState.listingId)) {
+        delState.byListing.set(delState.listingId, { folders: ["", "", ""], done: new Set() });
+      }
+      return delState.byListing.get(delState.listingId);
+    };
+
+    const renderAttach = () => {
+      const st = state();
+      const used = st.folders.filter(Boolean);
+      $("#dl-count").textContent = `${used.length} / 3`;
+      $("#dl-attach").innerHTML = st.folders.map((f, i) => `
+        <select class="input" data-slot="${i}">
+          <option value="">Attach a folder…</option>
+          ${FOLDERS.map((name) => `<option ${f === name ? "selected" : ""} ${used.includes(name) && f !== name ? "disabled" : ""}>${esc(name)}</option>`).join("")}
+        </select>`).join("");
+      $("#dl-attach").querySelectorAll("select").forEach((s) => s.addEventListener("change", () => {
+        st.folders[+s.dataset.slot] = s.value;
+        renderAttach();
+      }));
+      const files = assets.filter((a) => used.includes(a.folder));
+      const bytes = files.reduce((x, a) => x + a.size, 0);
+      $("#dl-summary").textContent = used.length
+        ? `${files.length} files (${fmtBytes(bytes)}) will be auto-delivered on every sale of this listing.`
+        : "Attach at least one folder so buyers receive something at checkout.";
+      $("#dl-go").disabled = !used.length;
+    };
+
+    const renderCust = () => {
+      const st = state();
+      $("#dl-cust").innerHTML = CUSTOMERS.map((cst, i) => {
+        const initials = cst.name.split(" ").map((w) => w[0]).join("");
+        const status = st.done.has(i) ? "delivered" : "awaiting";
+        return `<li data-i="${i}"><span class="avatar">${initials}</span>
+          <span><strong>${esc(cst.name)}</strong><br><span class="status-chip ${status}" id="dl-chip-${i}">${status.toUpperCase()}</span></span>
+          <span class="c-amt">+$${cst.amount}</span></li>`;
+      }).join("");
+      const done = st.done.size;
+      $("#dl-prog").style.width = `${(done / CUSTOMERS.length) * 100}%`;
+      $("#dl-stat").textContent = done ? `${done} of ${CUSTOMERS.length} delivered` : "";
+    };
+
+    $("#dl-listing").addEventListener("change", (e) => {
+      delState.listingId = +e.target.value;
+      renderAttach(); renderCust();
+    });
+
+    $("#dl-go").addEventListener("click", () => {
+      const st = state();
+      const used = st.folders.filter(Boolean);
+      const files = assets.filter((a) => used.includes(a.folder)).length;
+      $("#dl-go").disabled = true;
+      const queue = CUSTOMERS.map((_, i) => i).filter((i) => !st.done.has(i));
+      if (!queue.length) { st.done.clear(); renderCust(); }
+      const pending = queue.length ? queue : CUSTOMERS.map((_, i) => i);
+      let k = 0;
+      const step = () => {
+        if (k > 0) {
+          const prev = pending[k - 1];
+          st.done.add(prev);
+          const chip = $(`#dl-chip-${prev}`);
+          if (chip) { chip.className = "status-chip delivered"; chip.textContent = "DELIVERED"; }
+        }
+        $("#dl-prog").style.width = `${(st.done.size / CUSTOMERS.length) * 100}%`;
+        $("#dl-stat").textContent = `${st.done.size} of ${CUSTOMERS.length} delivered · ${files} files each`;
+        if (k < pending.length) {
+          const cur = pending[k];
+          const chip = $(`#dl-chip-${cur}`);
+          if (chip) { chip.className = "status-chip sending"; chip.textContent = "SENDING…"; }
+          k++;
+          setTimeout(step, 420);
+        } else {
+          $("#dl-go").disabled = false;
+          toast(`Delivered ${files} files to ${pending.length} buyers`);
+        }
+      };
+      step();
+    });
+
+    renderAttach(); renderCust();
   };
 
   // ---- router ----------------------------------------------------------------
