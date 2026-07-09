@@ -1,0 +1,37 @@
+# ListingView — Etsy publishing backend (Cloudflare Worker)
+#
+# Deploy:  npx wrangler deploy
+# Secrets: npx wrangler secret put ETSY_KEYSTRING
+#          npx wrangler secret put APP_TOKEN
+# KV:      npx wrangler kv namespace create TOKENS
+#          (paste the returned id below, then redeploy)
+
+name = "listingview-etsy"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# --- non-secret configuration --------------------------------------------------
+[vars]
+# Must exactly match the callback registered in your Etsy app settings AND the
+# deployed worker URL below. After your first `wrangler deploy` you'll get a
+# workers.dev URL like https://listingview-etsy.<subdomain>.workers.dev —
+# set REDIRECT_URI to that URL + /oauth/callback and redeploy.
+REDIRECT_URI = "https://listingview-etsy.YOUR-SUBDOMAIN.workers.dev/oauth/callback"
+
+# Optional: default Etsy taxonomy id used when a publish request omits one.
+# Find yours with:  GET /api/taxonomy?q=digital   (e.g. "Digital Prints")
+DEFAULT_TAXONOMY_ID = ""
+
+# Optional: hard-code your shop id to skip the /users/me lookup on every call.
+SHOP_ID = ""
+
+# --- KV: stores the rotating OAuth tokens --------------------------------------
+# Create with `npx wrangler kv namespace create TOKENS`, then paste the id here.
+[[kv_namespaces]]
+binding = "TOKENS"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
+
+# Secrets set via `wrangler secret put` (never in this file):
+#   ETSY_KEYSTRING  – your Etsy app's API keystring
+#   APP_TOKEN       – a long random string you invent; the shared key your UI
+#                     and automation send as `Authorization: Bearer <APP_TOKEN>`
