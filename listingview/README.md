@@ -22,6 +22,7 @@ functional against any input you type.
 | `#/library` | Asset Library | Folders + drag-and-drop uploads; every file you sell in one place; images feed the Mockup Generator |
 | `#/mockups` | Mockup Generator | Renders any design onto 6 products (mug, tee, tote, hoodie, sticker, poster); download PNGs, save the set to the library, or apply it as a listing's photos |
 | `#/delivery` | Digital Delivery | Attach library folders to a listing; simulated checkout queue auto-delivers files to buyers |
+| `#/publish` | Auto-Publisher | Bulk-post designs as live listings through a six-step automated pipeline with presets and instant SEO |
 | `#/score` | Listing Score | 0–100 SEO score for any title + tags + description with check-by-check fix-it tips |
 | `#/tags` | Tag Generator | 13 ready-to-paste tags (each ≤ 20 chars) from a product keyword, with copy-all |
 | `#/bulk` | Bulk Editor | Find & replace, price % adjustments, prefix/suffix, and photo slot edits (add / delete / swap) — with before/after preview, then apply |
@@ -44,6 +45,30 @@ from a listing photo:
 Templates live in `assets/mockups.js`; each one declares a print area and a
 `render()` that draws the scene, so adding a new product is one entry in the
 `templates` array.
+
+## The Auto-Publisher (blank canvas → live listing)
+
+Built for selling downloadable AI art: the Asset Library is the hand-off point
+for generation workflows (e.g. Claude skills that produce artwork) — any image
+that lands there is one click from being a live listing.
+
+Six automated steps per design:
+
+1. **Ingest design** — pulled from the Asset Library queue
+2. **Render mockups** — the six product mockups become the listing's photos
+3. **Instant SEO** — title from the preset's `{name}` template, 13 tags
+   (≤ 20 chars each), and a full digital-download description, all generated
+4. **Apply preset** — price, product type, and delivery folder from the preset
+5. **Quality check** — the listing is scored with the same analyzer as
+   Listing Score before it posts
+6. **Post listing** — it goes live under "Your Studio" in the Explorer, with
+   its delivery folder pre-attached in Digital Delivery
+
+Presets ship for Printable Wall Art, Digital Sticker Packs, and Gallery Poster
+Sets; edit any field and save your own. Select any number of designs and
+**Bulk-post** runs the whole queue with live per-step progress. (Demo build:
+"posting" creates listings in the in-app dataset — a production version would
+call Etsy's listing API here.)
 
 ## Files
 

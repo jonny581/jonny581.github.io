@@ -373,7 +373,7 @@
         <thead><tr>${cols.map(([k, lb, cls]) =>
           `<th class="${cls} ${k === "_trend" ? "" : "sortable"}" data-k="${k}">${lb} ${k === "_trend" ? "" : arrow(k)}</th>`).join("")}</tr></thead>
         <tbody>${slice.length ? slice.map((l) => `<tr class="clickable" data-id="${l.id}">
-          <td class="wrap"><span class="t-title">${esc(l.title)}</span><span class="t-shop">${esc(l.shop)} · ${esc(l.category)}</span></td>
+          <td class="wrap"><span class="t-title">${esc(l.title)}</span><span class="t-shop">${l.mine ? "★ Your listing · " : ""}${esc(l.shop)} · ${esc(l.category)}</span></td>
           <td class="num">${usd2(l.price)}</td><td class="num">${fmt.format(l.sales30)}</td>
           <td class="num">${usd(l.revenue30)}</td><td class="num">${fmt.format(l.views30)}</td>
           <td class="num">${fmt.format(l.favorites)}</td><td>${sparkline(l.trend)}</td>
@@ -406,7 +406,7 @@
       <button class="close-x" aria-label="Close">✕</button>
       <div class="meta">${esc(l.category)} · Listed ${l.ageMonths} months ago</div>
       <h2>${esc(l.title)}</h2>
-      <div class="meta">${esc(l.shop)} · ${esc(shop.country)} · ★ ${l.rating} (${fmt.format(l.reviews)} reviews)</div>
+      <div class="meta">${l.mine ? "★ Your listing · " : ""}${esc(l.shop)} · ${esc(shop.country)} · ★ ${l.rating} (${fmt.format(l.reviews)} reviews)</div>
       <h3>Photos</h3>
       ${slotStrip(l.photos, true)}
       <div class="kv-grid">
@@ -1130,6 +1130,234 @@
     });
 
     renderAttach(); renderCust();
+  };
+
+  // -- Auto-Publisher: blank canvas → live listing in six automated steps -------
+  const PIPE_STEPS = ["Ingest design", "Render mockups", "Instant SEO", "Apply preset", "Quality check", "Post listing"];
+
+  const DESC_TEMPLATE = (name, product) =>
+    `${name} — a high-resolution ${product.toLowerCase()} delivered as an instant digital download. ` +
+    "You receive print-ready files sized for the most common frame ratios (2:3, 3:4, 4:5, ISO and 11x14), each exported at 300 DPI for crisp results from desktop printers and professional print shops alike. " +
+    "Nothing ships: moments after checkout your files are delivered automatically, so you can print at home, at a local print shop, or through any online printing service and have new art on the wall today. " +
+    "Print as many copies as you like for personal use, resize with confidence, and re-download whenever you need the files again. " +
+    "Colors are calibrated for both matte and glossy paper stocks. " +
+    "Frames and props shown in listing photos are for display only and are not included. " +
+    "If anything looks off with your files, send a message and we will make it right within one business day. " +
+    "Please note that due to the digital nature of this product, all sales are final once files have been downloaded.";
+
+  const presets = [
+    { name: "Printable Wall Art", product: "Wall Art Print", price: 6.99, folder: "Designs", mockups: true,
+      title: "{name} Printable Wall Art | Boho Wall Decor Print | Digital Download", tagSeed: "printable wall art" },
+    { name: "Digital Sticker Pack", product: "Sticker Pack", price: 3.49, folder: "Designs", mockups: true,
+      title: "{name} Digital Sticker Pack | Cute PNG Stickers | Instant Download", tagSeed: "digital sticker" },
+    { name: "Gallery Poster Set", product: "Poster Set", price: 9.99, folder: "Designs", mockups: true,
+      title: "{name} Poster Set of 3 | Printable Gallery Wall Art | Digital Download", tagSeed: "gallery wall set" },
+  ];
+
+  const prettyName = (file) =>
+    file.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim()
+      .split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+  function ensureMyShop() {
+    let shop = shops.find((s) => s.mine);
+    if (!shop) {
+      shop = { id: Math.max(...shops.map((s) => s.id)) + 1, name: "Your Studio", country: "United States", openedYear: 2026, rating: 5.0, mine: true };
+      shops.push(shop);
+    }
+    return shop;
+  }
+
+  // Instant SEO: title from the preset template, 13 tags, long-form description
+  function instantSeo(design, preset) {
+    const name = prettyName(design.name);
+    const title = preset.title.split("{name}").join(name).slice(0, 140);
+    const tags = generateTags(`${name.toLowerCase()} ${preset.tagSeed}`);
+    const description = DESC_TEMPLATE(name, preset.product);
+    return { name, title, tags, description };
+  }
+
+  const pubState = { sel: new Set(), presetIdx: 0, running: false };
+  routes.publish = () => {
+    const p = presets[pubState.presetIdx];
+    main().innerHTML = `
+      ${header("Auto-Publisher", "From blank canvas to live listing in six automated steps. Drop finished art in the Asset Library (AI-generated art included — that's the hand-off point for generation workflows), pick a preset, and bulk-post.")}
+      <div class="card" style="margin-bottom:14px">
+        <h2>The pipeline</h2>
+        <div class="step-strip">${PIPE_STEPS.map((s, i) =>
+          `<span class="step"><span class="n">${i + 1}</span>${s}</span>${i < 5 ? `<span class="sep">→</span>` : ""}`).join("")}</div>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h2>1 · Queue designs</h2>
+          <div class="card-sub">Every image in your Asset Library is one click from being a live listing. New uploads land here automatically.</div>
+          <div class="controls" style="margin-bottom:0">
+            <button class="btn small" id="pb-all">Select all</button>
+            <button class="btn small" id="pb-none">Clear</button>
+            <a class="btn small" href="#/library">Add designs…</a>
+          </div>
+          <div class="queue-grid" id="pb-queue"></div>
+        </div>
+        <div class="card">
+          <h2>2 · Listing preset</h2>
+          <div class="card-sub">A preset handles the whole listing for you: title pattern, price, photos, and delivery.</div>
+          <select class="input" id="pb-preset" style="width:100%">
+            ${presets.map((x, i) => `<option value="${i}" ${i === pubState.presetIdx ? "selected" : ""}>${esc(x.name)} — $${x.price.toFixed(2)}</option>`).join("")}
+          </select>
+          <label class="field-label" for="pb-title">Title template <span style="color:var(--muted);font-weight:400">({name} = design name)</span></label>
+          <input class="input" id="pb-title" style="width:100%" value="${esc(p.title)}">
+          <label class="field-label" for="pb-price">Price (USD)</label>
+          <input class="input" id="pb-price" type="number" step="0.01" min="0.99" value="${p.price}" style="width:100%">
+          <label class="field-label" for="pb-folder">Deliver files from folder</label>
+          <select class="input" id="pb-folder" style="width:100%">
+            ${FOLDERS.map((f) => `<option ${f === p.folder ? "selected" : ""}>${esc(f)}</option>`).join("")}
+          </select>
+          <label class="field-label" style="display:flex;align-items:center;gap:8px;font-weight:500">
+            <input type="checkbox" id="pb-mock" ${p.mockups ? "checked" : ""}> Generate 6 mockup photos per listing</label>
+          <div class="copy-row">
+            <input class="input grow" id="pb-savename" placeholder="Save these settings as…">
+            <button class="btn small" id="pb-save">Save preset</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="controls" style="margin-bottom:4px">
+          <button class="btn primary" id="pb-run">Bulk-post 0 listings</button>
+          <span id="pb-stat" style="color:var(--muted);font-size:12.5px">Instant SEO writes the title, 13 tags, and description for every design, then the quality check scores it before posting.</span>
+        </div>
+        <div id="pb-console"></div>
+      </div>`;
+    wireTheme();
+
+    const designs = () => imageAssets().filter((a) => a.folder !== "Mockups");
+    const renderQueue = () => {
+      const ds = designs();
+      for (const id of [...pubState.sel]) if (!ds.some((d) => d.id === id)) pubState.sel.delete(id);
+      $("#pb-queue").innerHTML = ds.length ? ds.map((a) =>
+        `<span class="queue-pick ${pubState.sel.has(a.id) ? "on" : ""}"><span class="tick">✓</span>
+         <button class="design-pick ${pubState.sel.has(a.id) ? "active" : ""}" data-id="${a.id}" title="${esc(a.name)}"><img src="${a.src}" alt="${esc(a.name)}"></button></span>`).join("")
+        : `<div class="empty" style="grid-column:1/-1">No designs yet — upload art to the Asset Library.</div>`;
+      $("#pb-queue").querySelectorAll("[data-id]").forEach((b) => b.addEventListener("click", () => {
+        const id = +b.dataset.id;
+        pubState.sel.has(id) ? pubState.sel.delete(id) : pubState.sel.add(id);
+        renderQueue();
+      }));
+      $("#pb-run").textContent = `Bulk-post ${pubState.sel.size} listing${pubState.sel.size === 1 ? "" : "s"}`;
+      $("#pb-run").disabled = pubState.running || !pubState.sel.size;
+    };
+
+    const readPreset = () => ({
+      product: presets[pubState.presetIdx].product,
+      tagSeed: presets[pubState.presetIdx].tagSeed,
+      title: $("#pb-title").value || "{name} | Digital Download",
+      price: Math.max(0.99, parseFloat($("#pb-price").value) || 0.99),
+      folder: $("#pb-folder").value,
+      mockups: $("#pb-mock").checked,
+    });
+
+    $("#pb-preset").addEventListener("change", (e) => {
+      pubState.presetIdx = +e.target.value;
+      const x = presets[pubState.presetIdx];
+      $("#pb-title").value = x.title;
+      $("#pb-price").value = x.price;
+      $("#pb-folder").value = x.folder;
+      $("#pb-mock").checked = x.mockups;
+    });
+    $("#pb-save").addEventListener("click", () => {
+      const name = $("#pb-savename").value.trim();
+      if (!name) return toast("Name the preset first");
+      const cur = readPreset();
+      presets.push({ name, product: cur.product, tagSeed: cur.tagSeed, title: cur.title, price: cur.price, folder: cur.folder, mockups: cur.mockups });
+      pubState.presetIdx = presets.length - 1;
+      $("#pb-preset").innerHTML = presets.map((x, i) => `<option value="${i}" ${i === pubState.presetIdx ? "selected" : ""}>${esc(x.name)} — $${x.price.toFixed(2)}</option>`).join("");
+      $("#pb-savename").value = "";
+      toast(`Preset “${name}” saved`);
+    });
+    $("#pb-all").addEventListener("click", () => { designs().forEach((d) => pubState.sel.add(d.id)); renderQueue(); });
+    $("#pb-none").addEventListener("click", () => { pubState.sel.clear(); renderQueue(); });
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    $("#pb-run").addEventListener("click", async () => {
+      const queue = designs().filter((d) => pubState.sel.has(d.id));
+      if (!queue.length || pubState.running) return;
+      pubState.running = true;
+      renderQueue();
+      const preset = readPreset();
+      const shop = ensureMyShop();
+
+      $("#pb-console").innerHTML = queue.map((d, i) => `
+        <div class="pipe-row" id="pipe-${i}">
+          <img class="p-thumb" src="${d.src}" alt="">
+          <div class="p-body">
+            <div class="p-name">${esc(prettyName(d.name))}</div>
+            <div class="p-step" id="pipe-step-${i}">Queued</div>
+            <div class="pipe-dots">${PIPE_STEPS.map((s, k) => `<span class="pd" id="pd-${i}-${k}" title="${s}"></span>`).join("")}</div>
+          </div>
+          <div class="p-end" id="pipe-end-${i}"><span class="status-chip awaiting">QUEUED</span></div>
+        </div>`).join("");
+
+      let listed = 0;
+      for (let i = 0; i < queue.length; i++) {
+        const d = queue[i];
+        const mark = async (k, label, ms = 170) => {
+          $(`#pd-${i}-${k}`).classList.add("doing");
+          $(`#pipe-step-${i}`).textContent = `${k + 1}/6 · ${label}`;
+          await sleep(ms);
+          $(`#pd-${i}-${k}`).classList.remove("doing");
+          $(`#pd-${i}-${k}`).classList.add("done");
+        };
+        $(`#pipe-end-${i}`).innerHTML = `<span class="status-chip sending">POSTING…</span>`;
+
+        await mark(0, "Design ingested from Asset Library");
+
+        let photos = [d.src, null, null, null, null, null];
+        if (preset.mockups) {
+          $(`#pd-${i}-1`).classList.add("doing");
+          $(`#pipe-step-${i}`).textContent = "2/6 · Rendering 6 mockup photos";
+          const renders = await LVMock.renderAll(d.src, { scale: 1, offsetY: 0 });
+          photos = renders.map((r) => r.canvas.toDataURL("image/png"));
+          $(`#pd-${i}-1`).classList.remove("doing");
+          $(`#pd-${i}-1`).classList.add("done");
+        } else {
+          await mark(1, "Mockups skipped (preset)", 90);
+        }
+
+        const seo = instantSeo(d, preset);
+        await mark(2, `Instant SEO — title, ${seo.tags.length} tags, description`);
+        await mark(3, `Preset applied — $${preset.price.toFixed(2)}, delivery from “${preset.folder}”`);
+
+        const report = analyzeListing(seo.title, seo.tags, seo.description);
+        await mark(4, `Quality check — SEO score ${report.score}/100`);
+
+        const listing = {
+          id: Math.max(...listings.map((x) => x.id)) + 1,
+          title: seo.title, shopId: shop.id, shop: shop.name,
+          category: "Digital Downloads", price: preset.price,
+          sales30: 0, salesTotal: 0, revenue30: 0, views30: 0, favorites: 0,
+          reviews: 0, rating: 5.0, ageMonths: 0, tags: seo.tags,
+          trend: Array(12).fill(0), keyword: seo.name.toLowerCase(),
+          photos, seo: report.score, mine: true,
+        };
+        listings.push(listing);
+        delState.byListing.set(listing.id, { folders: [preset.folder, "", ""], done: new Set() });
+        await mark(5, "Listed — live in the Explorer", 120);
+
+        listed++;
+        $(`#pipe-step-${i}`).textContent = `Live · attached “${preset.folder}” for auto-delivery`;
+        $(`#pipe-end-${i}`).innerHTML = `${scoreBadge(report.score)} <span class="status-chip delivered">LISTED</span>
+          <button class="btn small" data-view="${listing.id}">View</button>`;
+        $(`#pipe-end-${i}`).querySelector("[data-view]").addEventListener("click", (e) => openDrawer(+e.target.dataset.view));
+        $("#pb-stat").textContent = `${listed} of ${queue.length} posted`;
+      }
+
+      pubState.running = false;
+      renderQueue();
+      $("#pb-stat").innerHTML = `${listed} listing${listed === 1 ? "" : "s"} live under “${esc(shop.name)}” — <a href="#/explorer" id="pb-open">see them in the Explorer</a>`;
+      $("#pb-open").addEventListener("click", () => { exState.q = shop.name; exState.cat = ""; exState.page = 1; });
+      toast(`Bulk-posted ${listed} listing${listed === 1 ? "" : "s"}`);
+    });
+
+    renderQueue();
   };
 
   // ---- router ----------------------------------------------------------------
