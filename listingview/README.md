@@ -66,9 +66,22 @@ Six automated steps per design:
 
 Presets ship for Printable Wall Art, Digital Sticker Packs, and Gallery Poster
 Sets; edit any field and save your own. Select any number of designs and
-**Bulk-post** runs the whole queue with live per-step progress. (Demo build:
-"posting" creates listings in the in-app dataset — a production version would
-call Etsy's listing API here.)
+**Bulk-post** runs the whole queue with live per-step progress.
+
+### Demo mode vs. live mode
+
+By default the Auto-Publisher runs in **demo mode**: step 6 creates listings in
+the in-app dataset so you can see the whole flow without touching Etsy.
+
+Expand **Live publishing** in the Auto-Publisher to connect the real backend
+(`../etsy-backend/`, a Cloudflare Worker holding your Etsy credentials). Paste
+the Worker URL + app token, test the connection, tick **Live mode**, and step 6
+calls `POST /api/publish` — creating real Etsy listings (drafts unless you tick
+Activate), uploading the six mockups as photos and the design as the digital
+deliverable. Each row then shows its real Etsy listing id and an **Open on Etsy**
+link. The same HTTP endpoint is what a Claude Code automation calls headlessly,
+so generated art can go straight to a live listing. See
+[`../etsy-backend/README.md`](../etsy-backend/README.md) for setup.
 
 ## Files
 

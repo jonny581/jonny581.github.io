@@ -1176,6 +1176,62 @@
     return { name, title, tags, description };
   }
 
+  // Connection + live-mode panel for the Auto-Publisher
+  function renderConnect() {
+    const el = $("#pb-connect");
+    if (!el) return;
+    const c = LVLive.getConfig();
+    el.innerHTML = `
+      <details ${c.live || !LVLive.configured() ? "open" : ""}>
+        <summary style="cursor:pointer;font-weight:600;color:var(--ink-2)">
+          Live publishing — ${LVLive.configured() ? `<span style="color:var(--good)">backend configured</span>` : `<span style="color:var(--warn)">not connected (demo mode)</span>`}
+        </summary>
+        <div class="grid two" style="margin-top:10px">
+          <div>
+            <label class="field-label" for="lc-url">Backend URL (your Cloudflare Worker)</label>
+            <input class="input" id="lc-url" style="width:100%" placeholder="https://listingview-etsy.you.workers.dev" value="${esc(c.baseUrl)}">
+            <label class="field-label" for="lc-token">App token</label>
+            <input class="input" id="lc-token" type="password" style="width:100%" placeholder="the APP_TOKEN secret you set" value="${esc(c.token)}">
+          </div>
+          <div>
+            <label class="field-label" for="lc-tax">Default Etsy taxonomy id</label>
+            <input class="input" id="lc-tax" style="width:100%" placeholder="e.g. 2078 — find via /api/taxonomy?q=digital" value="${esc(c.taxonomyId)}">
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;font-weight:500">
+              <input type="checkbox" id="lc-activate" ${c.activate ? "checked" : ""}> Activate listings on publish <span style="color:var(--warn)">(spends Etsy's $0.20/listing fee)</span></label>
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink)">
+              <input type="checkbox" id="lc-live" ${c.live ? "checked" : ""}> Live mode — post to Etsy for real</label>
+          </div>
+        </div>
+        <div class="copy-row">
+          <button class="btn" id="lc-save">Save connection</button>
+          <button class="btn" id="lc-test">Test connection</button>
+          <span id="lc-status" style="color:var(--muted);font-size:12.5px"></span>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin-top:6px">Demo mode posts into this app only. Live mode calls your backend, which creates real Etsy listings (as drafts unless you tick Activate). Setup steps: <code>etsy-backend/README.md</code>.</p>
+      </details>`;
+
+    const saveNow = () => LVLive.setConfig({
+      baseUrl: $("#lc-url").value.trim(), token: $("#lc-token").value.trim(),
+      taxonomyId: $("#lc-tax").value.trim(), activate: $("#lc-activate").checked, live: $("#lc-live").checked,
+    });
+    $("#lc-save").addEventListener("click", () => { saveNow(); renderConnect(); toast("Connection saved"); });
+    $("#lc-live").addEventListener("change", saveNow);
+    $("#lc-activate").addEventListener("change", saveNow);
+    $("#lc-test").addEventListener("click", async () => {
+      saveNow();
+      const s = $("#lc-status");
+      s.textContent = "Testing…"; s.style.color = "var(--muted)";
+      try {
+        const info = await LVLive.testConnection();
+        s.textContent = `✓ Connected to “${info.shop_name}” (${info.listing_active_count ?? 0} active listings)`;
+        s.style.color = "var(--good)";
+      } catch (err) {
+        s.textContent = "✗ " + err.message;
+        s.style.color = "var(--bad)";
+      }
+    });
+  }
+
   const pubState = { sel: new Set(), presetIdx: 0, running: false };
   routes.publish = () => {
     const p = presets[pubState.presetIdx];
@@ -1185,6 +1241,7 @@
         <h2>The pipeline</h2>
         <div class="step-strip">${PIPE_STEPS.map((s, i) =>
           `<span class="step"><span class="n">${i + 1}</span>${s}</span>${i < 5 ? `<span class="sep">→</span>` : ""}`).join("")}</div>
+        <div id="pb-connect" style="margin-top:14px"></div>
       </div>
       <div class="grid two">
         <div class="card">
@@ -1227,6 +1284,7 @@
         <div id="pb-console"></div>
       </div>`;
     wireTheme();
+    renderConnect();
 
     const designs = () => imageAssets().filter((a) => a.folder !== "Mockups");
     const renderQueue = () => {
@@ -1284,6 +1342,7 @@
       renderQueue();
       const preset = readPreset();
       const shop = ensureMyShop();
+      const live = LVLive.getConfig().live;
 
       $("#pb-console").innerHTML = queue.map((d, i) => `
         <div class="pipe-row" id="pipe-${i}">
@@ -1338,15 +1397,53 @@
           trend: Array(12).fill(0), keyword: seo.name.toLowerCase(),
           photos, seo: report.score, mine: true,
         };
+
+        // Step 6: post — live to Etsy if configured, otherwise into the demo dataset
+        const goLive = live && LVLive.configured();
+        let etsyResult = null, postError = null;
+        if (goLive) {
+          $(`#pd-${i}-5`).classList.add("doing");
+          $(`#pipe-step-${i}`).textContent = "6/6 · Posting to Etsy…";
+          try {
+            etsyResult = await LVLive.publish({
+              title: seo.title, description: seo.description, price: preset.price, tags: seo.tags,
+              images: photos.filter(Boolean),
+              files: [{ name: `${seo.name.replace(/[^\w.-]+/g, "-")}.${(d.name.split(".").pop() || "png")}`, data: d.src }],
+            });
+            listing.etsyId = etsyResult.listing_id;
+            listing.etsyUrl = etsyResult.url;
+            listing.etsyState = etsyResult.state;
+          } catch (err) {
+            postError = err;
+          }
+          $(`#pd-${i}-5`).classList.remove("doing");
+          $(`#pd-${i}-5`).classList.add(postError ? "" : "done");
+        } else {
+          await mark(5, "Listed — live in the Explorer", 120);
+        }
+
+        if (postError) {
+          $(`#pipe-step-${i}`).textContent = "Failed at post — " + postError.message;
+          $(`#pipe-end-${i}`).innerHTML = `<span class="status-chip" style="background:var(--bad);color:#fff">FAILED</span>`;
+          $("#pb-stat").textContent = `${listed} of ${queue.length} posted · ${i + 1 - listed} failed`;
+          continue;
+        }
+
         listings.push(listing);
         delState.byListing.set(listing.id, { folders: [preset.folder, "", ""], done: new Set() });
-        await mark(5, "Listed — live in the Explorer", 120);
-
         listed++;
-        $(`#pipe-step-${i}`).textContent = `Live · attached “${preset.folder}” for auto-delivery`;
-        $(`#pipe-end-${i}`).innerHTML = `${scoreBadge(report.score)} <span class="status-chip delivered">LISTED</span>
-          <button class="btn small" data-view="${listing.id}">View</button>`;
-        $(`#pipe-end-${i}`).querySelector("[data-view]").addEventListener("click", (e) => openDrawer(+e.target.dataset.view));
+
+        if (goLive) {
+          const stateLabel = (etsyResult.state || "draft").toUpperCase();
+          $(`#pipe-step-${i}`).textContent = `Etsy #${etsyResult.listing_id} · ${etsyResult.images_uploaded} photos, ${etsyResult.files_uploaded} file(s)`;
+          $(`#pipe-end-${i}`).innerHTML = `${scoreBadge(report.score)} <span class="status-chip delivered">${esc(stateLabel)}</span>
+            <a class="btn small" href="${esc(etsyResult.url)}" target="_blank" rel="noopener">Open on Etsy</a>`;
+        } else {
+          $(`#pipe-step-${i}`).textContent = `Live · attached “${preset.folder}” for auto-delivery`;
+          $(`#pipe-end-${i}`).innerHTML = `${scoreBadge(report.score)} <span class="status-chip delivered">LISTED</span>
+            <button class="btn small" data-view="${listing.id}">View</button>`;
+          $(`#pipe-end-${i}`).querySelector("[data-view]").addEventListener("click", (e) => openDrawer(+e.target.dataset.view));
+        }
         $("#pb-stat").textContent = `${listed} of ${queue.length} posted`;
       }
 

@@ -1,0 +1,16 @@
+{
+  "name": "listingview-etsy-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single-user Cloudflare Worker that publishes Etsy listings for ListingView.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "test": "node test/logic.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
